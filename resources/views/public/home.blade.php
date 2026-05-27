@@ -59,16 +59,6 @@
                        class="rounded-lg bg-blue-900 px-7 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800">
                         Daftar Sekarang
                     </a>
-
-                    <a href="#panduan"
-                       class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-7 py-3 text-sm font-semibold text-blue-900 transition hover:bg-slate-100">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
-                             viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M12 11v6m0-6V7m0 4h4m-4 0H8m12 2a8 8 0 11-16 0 8 8 0 0116 0z"/>
-                        </svg>
-                        Unduh Panduan
-                    </a>
                 </div>
             </div>
 
