@@ -62,4 +62,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('criteria/sync', [CriterionController::class, 'sync']);
 });
 
+Route::get('/registration', function () {
+    return view('public.registration');
+})->name('registration');
 
+Route::get('/registration-success', function () {
+    return view('public.registration-success');
+})->name('registration.success');
