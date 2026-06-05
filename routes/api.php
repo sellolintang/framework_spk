@@ -10,10 +10,13 @@ use App\Http\Controllers\Api\InterviewController;
 use App\Http\Controllers\Api\ScoreController;
 use App\Http\Controllers\Api\ArasResultController;
 use App\Http\Controllers\Api\JuryController;
+use App\Http\Controllers\Api\AnnouncementController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::post('/candidates/register', [CandidateController::class, 'register']);
+
+Route::get('/public/results', [AnnouncementController::class, 'publicResults']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -50,7 +53,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('aras-results', ArasResultController::class)
         ->only(['index', 'show', 'destroy']);
 
-
+    Route::post('/announcements/check-readiness', [AnnouncementController::class, 'checkReadiness']);
+    Route::post('/announcements/publish', [AnnouncementController::class, 'publish']);
+    Route::post('/announcements/unpublish', [AnnouncementController::class, 'unpublish']);
 
 });
 

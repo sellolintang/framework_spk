@@ -106,3 +106,9 @@ Route::get('/admin/aras', function () {
         'title' => 'Hasil ARAS - Duta PNJ',
     ]);
 })->name('admin.aras.index');
+
+Route::get('/admin/announcements', function () {
+    return view('admin.announcements.index', [
+        'title' => 'Publikasi Pengumuman - Duta PNJ',
+    ]);
+})->name('admin.announcements.index');
