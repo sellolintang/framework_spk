@@ -2,11 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Public Pages
-|--------------------------------------------------------------------------
-*/
+//Public Pages
 
 Route::get('/', function () {
     return view('public.home');
@@ -31,11 +27,7 @@ Route::get('/login', function () {
 })->name('login');
 
 
-/*
-|--------------------------------------------------------------------------
-| Admin Pages
-|--------------------------------------------------------------------------
-*/
+//Admin Pages
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', function () {
@@ -134,11 +126,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 });
 
 
-/*
-|--------------------------------------------------------------------------
-| Jury Pages
-|--------------------------------------------------------------------------
-*/
+//Jury Pages
 
 Route::prefix('jury')->name('jury.')->group(function () {
     Route::get('/dashboard', function () {
