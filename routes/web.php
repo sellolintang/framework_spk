@@ -9,6 +9,12 @@ Route::get('/', function () {
     return view('public.home');
 });
 
+Route::get('/pengumuman', function () {
+    return view('public.results', [
+        'title' => 'Pengumuman Hasil Seleksi - Duta PNJ',
+    ]);
+})->name('public.results');
+
 Route::get('/login', function () {
     return view('auth.login');
 })->name('login');
