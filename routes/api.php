@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\ArasResultController;
 use App\Http\Controllers\Api\JuryController;
 use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\MonitoringController;
+use App\Http\Controllers\Api\JuryDashboardController;
+use App\Http\Controllers\Api\JuryScoringController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -59,6 +61,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/announcements/check-readiness', [AnnouncementController::class, 'checkReadiness']);
     Route::post('/announcements/publish', [AnnouncementController::class, 'publish']);
     Route::post('/announcements/unpublish', [AnnouncementController::class, 'unpublish']);
+
+    Route::get('/jury/dashboard-summary', [JuryDashboardController::class, 'summary']);
+
+    Route::get('/jury/scoring-candidates', [JuryScoringController::class, 'index']);
+    Route::get('/jury/scoring-candidates/{candidate}', [JuryScoringController::class, 'show']);
+    Route::post('/jury/scoring-candidates/{candidate}/scores', [JuryScoringController::class, 'saveScores']);
+    
+    Route::get('/jury/scoring-history', [JuryScoringController::class, 'history']);
+    Route::get('/jury/scoring-history/{candidate}', [JuryScoringController::class, 'historyDetail']);
 
 });
 
