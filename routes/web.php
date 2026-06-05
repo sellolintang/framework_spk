@@ -100,3 +100,9 @@ Route::get('/admin/candidates', function () {
         'title' => 'Data Pendaftar - Duta PNJ',
     ]);
 })->name('admin.candidates.index');
+
+Route::get('/admin/aras', function () {
+    return view('admin.aras.index', [
+        'title' => 'Hasil ARAS - Duta PNJ',
+    ]);
+})->name('admin.aras.index');
