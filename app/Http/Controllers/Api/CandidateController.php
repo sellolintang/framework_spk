@@ -10,6 +10,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use App\Mail\CandidateRegistrationSuccess;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\CandidateAcceptedMail;
+use App\Mail\CandidateRejectedMail;
 
 class CandidateController extends Controller
 {
@@ -93,11 +98,25 @@ class CandidateController extends Controller
                 ]);
             });
 
+            $emailSent = true;
+            try {
+                Mail::to($candidate->email)->send(new CandidateRegistrationSuccess($candidate));
+            } catch (\Throwable $mailException) {
+                $emailSent = false;
+
+                Log::warning('Email pendaftaran gagal dikirim.', [
+                    'candidate_id' => $candidate->id,
+                    'email' => $candidate->email,
+                    'error' => $mailException->getMessage(),
+                ]);
+            }
+
             return response()->json([
                 'message' => 'Pendaftaran berhasil disimpan.',
                 'data' => [
                     'candidate' => $candidate,
                     'registration_number' => $candidate->registration_number,
+                    'email_sent' => $emailSent,
                 ],
             ], 201);
         } catch (\Throwable $e) {
@@ -295,10 +314,27 @@ class CandidateController extends Controller
             'rejection_reason' => null,
         ]);
 
+        $candidate = $candidate->fresh(['period', 'validator']);
+
+        $emailSent = true;
+
+        try {
+            Mail::to($candidate->email)->send(new CandidateAcceptedMail($candidate));
+        } catch (\Throwable $mailException) {
+            $emailSent = false;
+
+            Log::warning('Email penerimaan calon gagal dikirim.', [
+                'candidate_id' => $candidate->id,
+                'email' => $candidate->email,
+                'error' => $mailException->getMessage(),
+            ]);
+        }
+
         return response()->json([
             'message' => 'Calon berhasil divalidasi.',
             'data' => [
-                'candidate' => $candidate->fresh(['period', 'validator']),
+                'candidate' => $candidate,
+                'email_sent' => $emailSent,
             ],
         ]);
     }
@@ -327,10 +363,27 @@ class CandidateController extends Controller
             'rejection_reason' => $validated['rejection_reason'],
         ]);
 
+        $candidate = $candidate->fresh(['period', 'validator']);
+
+        $emailSent = true;
+
+        try {
+            Mail::to($candidate->email)->send(new CandidateRejectedMail($candidate));
+        } catch (\Throwable $mailException) {
+            $emailSent = false;
+
+            Log::warning('Email penolakan calon gagal dikirim.', [
+                'candidate_id' => $candidate->id,
+                'email' => $candidate->email,
+                'error' => $mailException->getMessage(),
+            ]);
+        }
+
         return response()->json([
             'message' => 'Calon berhasil ditolak.',
             'data' => [
-                'candidate' => $candidate->fresh(['period', 'validator']),
+                'candidate' => $candidate,
+                'email_sent' => $emailSent,
             ],
         ]);
     }

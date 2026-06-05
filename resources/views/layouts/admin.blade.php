@@ -9,7 +9,7 @@
 
     @stack('styles')
 </head>
-
+@stack('scripts')
 <body class="min-h-screen bg-[#F5F7FB] text-slate-900">
     <div id="adminSidebarOverlay" class="fixed inset-0 z-40 hidden bg-slate-900/40 lg:hidden"></div>
 
