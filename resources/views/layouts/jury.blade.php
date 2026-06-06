@@ -138,12 +138,6 @@
             } catch (error) {
                 console.error(error);
             } finally {
-                localStorage.removeItem('duta_kampus_token');
-                localStorage.removeItem('duta_kampus_user');
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('token');
-
                 window.location.href = DutaJury.loginUrl;
             }
         }
