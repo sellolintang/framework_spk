@@ -16,6 +16,12 @@
             'icon' => 'grid',
         ],
         [
+            'label' => 'Periode Seleksi',
+            'url' => url('/admin/periods'),
+            'active' => 'admin/periods*',
+            'icon' => 'calendar',
+        ],
+        [
             'label' => 'Data Pendaftar',
             'url' => url('/admin/candidates'),
             'active' => 'admin/candidates*',
