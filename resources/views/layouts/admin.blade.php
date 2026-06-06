@@ -156,6 +156,32 @@
         function closeModal(id) {
             document.getElementById(id)?.classList.add('hidden');
         }
+
+        async function loadPeriodOptions(selectId = 'periodIdInput') {
+            const select = document.getElementById(selectId);
+
+            if (!select || !window.DutaAdmin) return;
+
+            const currentValue = select.value || '1';
+
+            try {
+                const result = await DutaAdmin.request('/periods');
+
+                const periods = Array.isArray(result?.data)
+                    ? result.data
+                    : (result?.data?.data || []);
+
+                if (!periods.length) return;
+
+                select.innerHTML = periods.map(period => `
+                    <option value="${period.id}" ${String(period.id) === String(currentValue) ? 'selected' : ''}>
+                        ${period.election_year}
+                    </option>
+                `).join('');
+            } catch (error) {
+                console.error('Gagal memuat periode:', error);
+            }
+        }
     </script>
 
     @stack('scripts')

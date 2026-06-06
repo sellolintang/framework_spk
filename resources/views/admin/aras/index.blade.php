@@ -119,18 +119,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 gap-3 md:grid-cols-[160px_140px]">
-                    <div>
-                        <label for="periodIdInput" class="mb-1 block text-xs font-bold text-slate-600">
-                            Periode ID
-                        </label>
-                        <input
-                            id="periodIdInput"
-                            type="number"
-                            min="1"
-                            value="1"
-                            class="h-10 w-full rounded-md border border-slate-300 bg-white px-4 text-sm outline-none focus:border-[#00288E] focus:ring-2 focus:ring-blue-100"
-                        >
-                    </div>
+                    <x-period-select width="w-40" height="h-10" />
 
                     <div class="flex items-end">
                         <button
@@ -195,7 +184,12 @@
     <script>
         let arasResults = [];
 
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', async function () {
+            const params = new URLSearchParams(window.location.search);
+            const periodId = params.get('period_id') || '1';
+
+            await loadPeriodOptions('periodIdInput', periodId);
+
             loadArasResults();
 
             document.getElementById('periodIdInput')?.addEventListener('change', function () {
