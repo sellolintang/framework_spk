@@ -25,18 +25,8 @@
         <form id="generateForm" class="space-y-5">
             <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div>
-                    <label for="period_id" class="mb-2 block text-sm font-bold text-slate-700">
-                        Periode ID <span class="text-red-600">*</span>
-                    </label>
+                    <x-period-select width="w-40" height="h-11" />
 
-                    <input
-                        id="period_id"
-                        type="number"
-                        min="1"
-                        value="1"
-                        required
-                        class="h-11 w-full rounded-md border border-slate-300 bg-white px-4 text-sm outline-none focus:border-[#00288E] focus:ring-2 focus:ring-blue-100"
-                    >
 
                     <p class="mt-1.5 text-xs text-slate-500">
                         Sistem akan mengambil calon valid pada periode ini.
@@ -131,7 +121,12 @@
 
 @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', async function () {
+            const params = new URLSearchParams(window.location.search);
+            const periodId = params.get('period_id') || '1';
+
+            await loadPeriodOptions('periodIdInput', periodId);
+
             document.getElementById('generateForm')?.addEventListener('submit', submitGenerateSchedule);
         });
 
@@ -139,7 +134,7 @@
             event.preventDefault();
 
             const payload = {
-                period_id: Number(document.getElementById('period_id').value),
+                period_id: Number(document.getElementById('periodIdInput').value),
                 interview_date: document.getElementById('interview_date').value,
                 start_time: document.getElementById('start_time').value,
                 duration_minutes: Number(document.getElementById('duration_minutes').value),

@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 
+//Public Pages
+
 // Public Pages
 Route::get('/', function () {
     return view('public.home');
@@ -26,9 +28,9 @@ Route::get('/login', function () {
 })->name('login');
 
 
-// Admin Pages
-Route::prefix('admin')->name('admin.')->group(function () {
+//Admin Pages
 
+Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', function () {
         return view('admin.dashboard', [
             'title' => 'Dashboard Admin - Duta PNJ',
@@ -128,13 +130,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
             'title' => 'Publikasi Pengumuman - Duta PNJ',
         ]);
     })->name('announcements.index');
-
 });
 
 
-// Jury Pages
-Route::prefix('jury')->name('jury.')->group(function () {
+//Jury Pages
 
+Route::prefix('jury')->name('jury.')->group(function () {
     Route::get('/dashboard', function () {
         return view('jury.dashboard', [
             'title' => 'Dashboard Juri - Duta PNJ',
@@ -173,5 +174,4 @@ Route::prefix('jury')->name('jury.')->group(function () {
             'candidateId' => $candidate,
         ]);
     })->name('history.show');
-
 });

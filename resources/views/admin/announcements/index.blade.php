@@ -46,17 +46,7 @@
                 </div>
 
                 <div class="mt-5">
-                    <label for="periodIdInput" class="mb-2 block text-sm font-bold text-slate-700">
-                        Periode ID
-                    </label>
-
-                    <input
-                        id="periodIdInput"
-                        type="number"
-                        min="1"
-                        value="1"
-                        class="h-11 w-full rounded-md border border-slate-300 bg-white px-4 text-sm outline-none focus:border-[#00288E] focus:ring-2 focus:ring-blue-100"
-                    >
+                    <x-period-select width="w-full" height="h-10" />
                 </div>
 
                 <div class="mt-5">
@@ -242,7 +232,12 @@
         let latestReadiness = null;
         let latestArasResults = [];
 
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', async function () {
+            const params = new URLSearchParams(window.location.search);
+            const periodId = params.get('period_id') || '1';
+
+            await loadPeriodOptions('periodIdInput', periodId);
+
             loadPageData();
 
             document.getElementById('periodIdInput')?.addEventListener('change', function () {
