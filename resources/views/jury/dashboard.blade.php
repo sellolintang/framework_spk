@@ -91,14 +91,15 @@
                             Dashboard
                         </a>
 
-                        <a href="#" class="flex items-center gap-3 rounded-md px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-[#00288E]">
+                        <a href="{{ route('jury.interviews.index') }}"
+                           class="flex items-center gap-3 rounded-md px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-[#00288E]">
                             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
                                 <path d="M7 3V6M17 3V6M4 9H20M5 5H19V21H5V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                             </svg>
                             Jadwal Wawancara
                         </a>
 
-                        <a href="#" class="flex items-center gap-3 rounded-md px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-[#00288E]">
+                        <a href="{{ route('jury.candidates.index') }}" class="flex items-center gap-3 rounded-md px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-[#00288E]">
                             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
                                 <path d="M4 7H20M4 12H20M4 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                                 <path d="M8 7H8.01M8 12H8.01M8 17H8.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
@@ -106,15 +107,7 @@
                             Daftar Calon
                         </a>
 
-                        <a href="#" class="flex items-center gap-3 rounded-md px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-[#00288E]">
-                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
-                                <path d="M4 5H20V17H8L4 21V5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                                <path d="M8 9H16M8 13H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            </svg>
-                            Form Penilaian
-                        </a>
-
-                        <a href="#" class="flex items-center gap-3 rounded-md px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-[#00288E]">
+                        <a href="{{ route('jury.scores.index') }}" class="flex items-center gap-3 rounded-md px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-[#00288E]">
                             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
                                 <path d="M4 7H14C17.314 7 20 9.686 20 13C20 16.314 17.314 19 14 19H6"
                                       stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -129,12 +122,10 @@
                     <div class="mb-8 h-px bg-slate-200"></div>
 
                     <div class="mb-8 flex items-center gap-3 rounded-xl bg-white px-2 py-2 shadow-sm">
-                        <div class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-white">
-                            JU
-                        </div>
+                        <div id="juryInitial">JU</div>
                         <div>
-                            <p id="sidebarUserName" class="text-sm font-extrabold text-slate-800">Juri Utama</p>
-                            <p id="sidebarUserEmail" class="text-xs text-slate-500">juri@pnj.ac.id</p>
+                            <p id="juryName">Memuat...</p>
+                            <p id="juryEmail">Memuat email...</p>
                         </div>
                     </div>
 
@@ -158,17 +149,17 @@
                         <h2 class="text-[40px] font-extrabold leading-tight tracking-tight text-[#00288E]">
                             Dashboard Juri
                         </h2>
-                        <p class="mt-1 text-[17px] text-slate-600">
-                            Selamat datang kembali, <span id="welcomeName">Pak Bambang</span>. Mari mulai proses penilaian.
+                        <p id="welcomeText">
+                            Selamat datang kembali. Mari mulai proses penilaian.
                         </p>
                     </div>
 
-                    <button class="mt-3 inline-flex items-center gap-3 rounded-lg bg-[#00288E] px-10 py-4 text-sm font-bold text-white shadow-sm transition hover:bg-[#001F73]">
+                    <a href="/jury/candidates" class="mt-3 inline-flex items-center gap-3 rounded-lg bg-[#00288E] px-10 py-4 text-sm font-bold text-white shadow-sm transition hover:bg-[#001F73]">
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M8 5V19L19 12L8 5Z"/>
                         </svg>
                         Mulai Penilaian Sekarang
-                    </button>
+                    </a>
                 </section>
 
                 <!-- Stats -->
@@ -186,7 +177,7 @@
                         </div>
 
                         <div class="flex items-end gap-2">
-                            <h3 id="todayScheduleCount" class="text-[40px] font-extrabold leading-none text-[#00288E]">8</h3>
+                            <h3 id="todayScheduleCount" class="text-[40px] font-extrabold leading-none text-[#00288E]"></h3>
                             <p class="mb-1 text-base font-medium text-slate-500">Sesi</p>
                         </div>
                     </div>
@@ -205,7 +196,7 @@
                         </div>
 
                         <div class="flex items-end gap-2">
-                            <h3 id="scoredCount" class="text-[40px] font-extrabold leading-none text-yellow-800">15</h3>
+                            <h3 id="candidateScoredCount" class="text-[40px] font-extrabold leading-none text-yellow-800"></h3>
                             <p class="mb-1 text-base font-medium text-slate-500">Mahasiswa</p>
                         </div>
                     </div>
@@ -225,7 +216,7 @@
                         </div>
 
                         <div class="flex items-end gap-2">
-                            <h3 id="unscoredCount" class="text-[40px] font-extrabold leading-none text-orange-900">10</h3>
+                            <h3 id="notScoredCount" class="text-[40px] font-extrabold leading-none text-orange-900"></h3>
                             <p class="mb-1 text-base font-medium text-slate-500">Mahasiswa</p>
                         </div>
                     </div>
@@ -325,8 +316,8 @@
 
                             <div>
                                 <h4 class="text-base font-extrabold text-slate-800">Aktivitas Terakhir</h4>
-                                <p class="mt-2 max-w-md text-sm leading-relaxed text-slate-700">
-                                    Anda baru saja menyelesaikan penilaian untuk <strong>Rina Mutia</strong> 5 menit yang lalu.
+                                <p id="lastActivityText">
+                                    Memuat aktivitas terakhir...
                                 </p>
                             </div>
                         </div>
@@ -338,33 +329,37 @@
     </div>
 
     <script>
-        const token = localStorage.getItem('duta_kampus_token');
-        const user = JSON.parse(localStorage.getItem('duta_kampus_user') || 'null');
-        const apiBase = "{{ url('/api') }}";
+    document.addEventListener('DOMContentLoaded', async function () {
+        const API_BASE_URL = '/api';
 
-        if (!token || !user) {
-            window.location.href = "{{ url('/login') }}";
+        const token =
+            localStorage.getItem('duta_kampus_token') ||
+            localStorage.getItem('auth_token') ||
+            localStorage.getItem('token') ||
+            localStorage.getItem('access_token') ||
+            sessionStorage.getItem('duta_kampus_token') ||
+            sessionStorage.getItem('auth_token') ||
+            sessionStorage.getItem('token') ||
+            sessionStorage.getItem('access_token');
+
+        const user = JSON.parse(
+            localStorage.getItem('duta_kampus_user') ||
+            sessionStorage.getItem('duta_kampus_user') ||
+            'null'
+        );
+
+        if (!token) {
+            alert('Token tidak ditemukan. Silakan login ulang.');
+            window.location.href = '/login';
         }
 
         if (user && user.role !== 'juri') {
-            window.location.href = "{{ url('/login') }}";
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            hydrateUser();
-            loadJuryDashboard();
-        });
-
-        function hydrateUser() {
-            if (!user) return;
-
-            document.getElementById('sidebarUserName').textContent = user.name ?? 'Juri';
-            document.getElementById('sidebarUserEmail').textContent = user.email ?? 'juri@pnj.ac.id';
-            document.getElementById('welcomeName').textContent = user.name ?? 'Juri';
+            alert('Akses ditolak. Halaman ini hanya untuk juri.');
+            window.location.href = '/login';
         }
 
         async function apiGet(endpoint) {
-            const response = await fetch(`${apiBase}${endpoint}`, {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
@@ -373,109 +368,65 @@
             });
 
             if (response.status === 401) {
-                localStorage.removeItem('duta_kampus_token');
-                localStorage.removeItem('duta_kampus_user');
-                window.location.href = "{{ url('/login') }}";
-                return null;
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('token');
+                sessionStorage.removeItem('auth_token');
+                sessionStorage.removeItem('token');
+
+                alert('Sesi login berakhir. Silakan login ulang.');
+                window.location.href = '/login';
+                return;
             }
+
+            const result = await response.json();
 
             if (!response.ok) {
-                return null;
+                throw {
+                    status: response.status,
+                    message: result.message || 'Gagal mengambil data.',
+                    result,
+                };
             }
 
-            return await response.json();
+            return result;
         }
 
-        async function loadJuryDashboard() {
-            try {
-                const myScores = await apiGet('/my-scores');
-
-                if (myScores?.data) {
-                    const items = Array.isArray(myScores.data)
-                        ? myScores.data
-                        : (myScores.data.data ?? myScores.data.items ?? []);
-
-                    document.getElementById('scoredCount').textContent = items.length || 0;
-                }
-
-                const interviews = await apiGet('/interviews?per_page=2');
-
-                if (interviews?.data) {
-                    const items = interviews.data.data ?? interviews.data.items ?? [];
-
-                    if (items.length > 0) {
-                        renderScheduleRows(items);
-                        document.getElementById('todayScheduleCount').textContent = items.length;
-                    }
-                }
-            } catch (error) {
-                console.error(error);
+        function safeSetText(id, value) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
             }
         }
 
-        function renderScheduleRows(items) {
-            const tbody = document.getElementById('scheduleTableBody');
+        function getInitial(name) {
+            if (!name) return 'JU';
 
-            tbody.innerHTML = items.map(item => {
-                const candidate = item.candidate ?? {};
-                const status = item.status ?? 'scheduled';
+            const words = name.trim().split(' ');
+            if (words.length === 1) {
+                return words[0].substring(0, 2).toUpperCase();
+            }
 
-                return `
-                    <tr>
-                        <td class="px-7 py-5 font-medium text-slate-800">${escapeHtml(candidate.full_name ?? '-')}</td>
-                        <td class="px-7 py-5 text-slate-600">${escapeHtml(candidate.student_number ?? '-')}</td>
-                        <td class="px-7 py-5 font-medium text-slate-800">${formatTime(item.scheduled_at)}</td>
-                        <td class="px-7 py-5">${renderStatus(status)}</td>
-                        <td class="px-7 py-5">
-                            ${status === 'completed' ? renderViewButton() : renderScoreButton()}
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+            return `${words[0][0]}${words[1][0]}`.toUpperCase();
         }
 
-        function renderStatus(status) {
-            const labels = {
-                scheduled: 'Menunggu',
-                completed: 'Selesai',
-                absent: 'Tidak Hadir',
-                cancelled: 'Dibatalkan',
-            };
+        function formatDateTime(dateTime) {
+            if (!dateTime) return '-';
 
-            const classes = {
-                scheduled: 'bg-yellow-100 text-yellow-800',
-                completed: 'bg-indigo-100 text-indigo-800',
-                absent: 'bg-red-100 text-red-700',
-                cancelled: 'bg-slate-200 text-slate-700',
-            };
+            const date = new Date(dateTime);
 
-            return `
-                <span class="rounded-full px-4 py-1 text-xs font-extrabold ${classes[status] ?? 'bg-slate-100 text-slate-700'}">
-                    ${labels[status] ?? status}
-                </span>
-            `;
+            return date.toLocaleString('id-ID', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+            });
         }
 
-        function renderScoreButton() {
-            return `
-                <button class="inline-flex items-center gap-2 rounded-md bg-[#00288E] px-5 py-2 text-xs font-extrabold text-white hover:bg-[#001F73]">
-                    Nilai
-                </button>
-            `;
-        }
+        function formatTime(dateTime) {
+            if (!dateTime) return '-';
 
-        function renderViewButton() {
-            return `
-                <button class="inline-flex items-center gap-2 rounded-md border border-slate-400 bg-white px-5 py-2 text-xs font-extrabold text-[#00288E] hover:bg-slate-50">
-                    Lihat
-                </button>
-            `;
-        }
-
-        function formatTime(dateString) {
-            if (!dateString) return '-';
-
-            const date = new Date(dateString);
+            const date = new Date(dateTime);
 
             return date.toLocaleTimeString('id-ID', {
                 hour: '2-digit',
@@ -483,32 +434,175 @@
             });
         }
 
-        function escapeHtml(value) {
-            return String(value)
-                .replaceAll('&', '&amp;')
-                .replaceAll('<', '&lt;')
-                .replaceAll('>', '&gt;')
-                .replaceAll('"', '&quot;')
-                .replaceAll("'", '&#039;');
+        function statusBadge(status) {
+            const labels = {
+                scheduled: 'Menunggu',
+                completed: 'Selesai',
+                absent: 'Tidak Hadir',
+                cancelled: 'Dibatalkan',
+            };
+
+            return labels[status] || status || '-';
         }
 
-        async function logout() {
+        async function loadLoggedInJury() {
             try {
-                await fetch(`${apiBase}/logout`, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    },
-                });
+                const response = await apiGet('/me');
+                const user = response.data?.user;
+
+                if (!user) return;
+
+                safeSetText('juryInitial', getInitial(user.name));
+                safeSetText('juryName', user.name || '-');
+                safeSetText('juryEmail', user.email || '-');
+                safeSetText('welcomeText', `Selamat datang kembali, ${user.name}. Mari mulai proses penilaian.`);
             } catch (error) {
                 console.error(error);
-            } finally {
-                localStorage.removeItem('duta_kampus_token');
-                localStorage.removeItem('duta_kampus_user');
-                window.location.href = "{{ url('/login') }}";
+                safeSetText('welcomeText', 'Gagal memuat data juri. Silakan muat ulang halaman.');
             }
         }
+
+        async function loadMyScores() {
+            try {
+                const response = await apiGet('/my-scores');
+                const scores = Array.isArray(response.data) ? response.data : [];
+
+                scores.forEach(score => {
+                    const candidateId = score.candidate_id || score.candidate?.id;
+
+                    if (candidateId) {
+                        scoredCandidateIds.add(Number(candidateId));
+                    }
+                });
+
+                safeSetText('candidateScoredCount', scoredCandidateIds.size);
+
+                if (scores.length === 0) {
+                    safeSetText('lastActivityText', 'Belum ada aktivitas penilaian.');
+                    return;
+                }
+
+                const sortedScores = scores.sort((a, b) => {
+                    const dateA = new Date(a.updated_at || a.created_at || 0);
+                    const dateB = new Date(b.updated_at || b.created_at || 0);
+
+                    return dateB - dateA;
+                });
+
+                const latest = sortedScores[0];
+                const candidateName = latest.candidate?.full_name || 'calon';
+                const criterionName = latest.criterion?.name || 'kriteria';
+                const scoreValue = latest.score ?? '-';
+                const updatedAt = formatDateTime(latest.updated_at || latest.created_at);
+
+                safeSetText(
+                    'lastActivityText',
+                    `Terakhir memberi nilai ${scoreValue} untuk ${candidateName} pada kriteria ${criterionName}. ${updatedAt}`
+                );
+            } catch (error) {
+                console.error(error);
+                safeSetText('candidateScoredCount', '0');
+                safeSetText('lastActivityText', 'Gagal memuat riwayat penilaian.');
+            }
+        }
+
+        async function loadTodayInterviews() {
+            const today = new Date().toISOString().slice(0, 10);
+            const tableBody = document.getElementById('nearestInterviewRows');
+
+            if (!tableBody) return;
+
+            tableBody.innerHTML = `
+            <tbody id="nearestInterviewRows">
+                <tr>
+                    <td colspan="5" class="px-4 py-6 text-center text-slate-500">
+                        Memuat jadwal wawancara...
+                    </td>
+                </tr>
+            </tbody>
+            `;
+
+            try {
+                const response = await apiGet(`/interviews?date=${today}&per_page=5`);
+
+                const interviews =
+                    response.data?.data ||
+                    response.data ||
+                    [];
+
+                safeSetText('todayScheduleCount', interviews.length);
+
+                const notScoredCount = interviews.filter(item => {
+                    return !scoredCandidateIds.has(Number(item.candidate_id));
+                }).length;
+
+                safeSetText('notScoredCount', notScoredCount);
+
+                if (interviews.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="px-4 py-6 text-center text-slate-500">
+                                Tidak ada jadwal wawancara hari ini.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tableBody.innerHTML = interviews.map(item => {
+                    const candidateId = item.candidate_id;
+                    const alreadyScored = scoredCandidateIds.has(Number(candidateId));
+                    const actionText = alreadyScored ? 'Lihat / Ubah' : 'Nilai';
+                    const actionClass = alreadyScored
+                        ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        : 'bg-blue-600 text-white hover:bg-blue-700';
+
+                    return `
+                        <tr class="border-b border-slate-100">
+                            <td class="px-4 py-3 font-medium text-slate-800">
+                                ${item.full_name || '-'}
+                            </td>
+                            <td class="px-4 py-3 text-slate-600">
+                                ${item.student_number || '-'}
+                            </td>
+                            <td class="px-4 py-3 text-slate-600">
+                                ${formatTime(item.scheduled_at)}
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">
+                                    ${statusBadge(item.status)}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <a href="/jury/scoring/${candidateId}"
+                                class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold ${actionClass}">
+                                    ${actionText}
+                                </a>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error(error);
+
+                safeSetText('todayScheduleCount', '-');
+                safeSetText('notScoredCount', '-');
+
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-4 py-6 text-center text-slate-500">
+                            Jadwal wawancara belum bisa dimuat untuk akun juri karena endpoint <strong>/api/interviews</strong>
+                            saat ini masih dibatasi untuk admin.
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        await loadLoggedInJury();
+        await loadMyScores();
+        await loadTodayInterviews();
+    });
     </script>
 </body>
 </html>

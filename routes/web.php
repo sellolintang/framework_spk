@@ -100,3 +100,28 @@ Route::get('/admin/candidates', function () {
         'title' => 'Data Pendaftar - Duta PNJ',
     ]);
 })->name('admin.candidates.index');
+
+Route::get('/jury/candidates', function () {
+    return view('jury.candidates', [
+        'title' => 'Daftar Calon - Duta PNJ',
+    ]);
+})->name('jury.candidates.index');
+
+Route::get('/jury/interviews', function () {
+    return view('jury.interviews', [
+        'title' => 'Jadwal Wawancara - Duta PNJ',
+    ]);
+})->name('jury.interviews.index');
+
+Route::get('/jury/scoring/{candidate}', function ($candidate) {
+    return view('jury.scoring', [
+        'title' => 'Form Penilaian - Duta PNJ',
+        'candidateId' => $candidate,
+    ]);
+})->name('jury.scoring.show');
+
+Route::get('/jury/scores', function () {
+    return view('jury.scores', [
+        'title' => 'Riwayat Penilaian - Duta PNJ',
+    ]);
+})->name('jury.scores.index');
