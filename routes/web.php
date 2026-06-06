@@ -9,6 +9,12 @@ Route::get('/', function () {
     return view('public.home');
 });
 
+Route::get('/pengumuman', function () {
+    return view('public.results', [
+        'title' => 'Pengumuman Hasil Seleksi - Duta PNJ',
+    ]);
+})->name('public.results');
+
 Route::get('/login', function () {
     return view('auth.login');
 })->name('login');
@@ -83,9 +89,50 @@ Route::get('/admin/interviews/{interview}/edit', function ($interview) {
     ]);
 })->name('admin.interviews.edit');
 
+Route::get('/admin/monitoring', function () {
+    return view('admin.monitoring.index', [
+        'title' => 'Monitoring Penilaian - Duta PNJ',
+    ]);
+})->name('admin.monitoring.index');
+
 Route::get('/jury/dashboard', function () {
-    return view('jury.dashboard');
+    return view('jury.dashboard', [
+        'title' => 'Dashboard Juri - Duta PNJ',
+    ]);
 })->name('jury.dashboard');
+
+Route::get('/jury/scoring', function () {
+    return view('jury.scoring.index', [
+        'title' => 'Penilaian Peserta - Duta PNJ',
+    ]);
+})->name('jury.scoring.index');
+
+Route::get('/jury/scoring/{candidate}', function ($candidate) {
+    return view('jury.scoring.detail', [
+        'title' => 'Detail Peserta - Duta PNJ',
+        'candidateId' => $candidate,
+    ]);
+})->name('jury.scoring.detail');
+
+Route::get('/jury/scoring/{candidate}/form', function ($candidate) {
+    return view('jury.scoring.form', [
+        'title' => 'Form Penilaian Peserta - Duta PNJ',
+        'candidateId' => $candidate,
+    ]);
+})->name('jury.scoring.form');
+
+Route::get('/jury/history', function () {
+    return view('jury.history.index', [
+        'title' => 'Riwayat Penilaian - Duta PNJ',
+    ]);
+})->name('jury.history.index');
+
+Route::get('/jury/history/{candidate}', function ($candidate) {
+    return view('jury.history.show', [
+        'title' => 'Detail Riwayat Penilaian - Duta PNJ',
+        'candidateId' => $candidate,
+    ]);
+})->name('jury.history.show');
 
 Route::get('/registration', function () {
     return view('public.registration');
@@ -101,27 +148,14 @@ Route::get('/admin/candidates', function () {
     ]);
 })->name('admin.candidates.index');
 
-Route::get('/jury/candidates', function () {
-    return view('jury.candidates', [
-        'title' => 'Daftar Calon - Duta PNJ',
+Route::get('/admin/aras', function () {
+    return view('admin.aras.index', [
+        'title' => 'Hasil ARAS - Duta PNJ',
     ]);
-})->name('jury.candidates.index');
+})->name('admin.aras.index');
 
-Route::get('/jury/interviews', function () {
-    return view('jury.interviews', [
-        'title' => 'Jadwal Wawancara - Duta PNJ',
+Route::get('/admin/announcements', function () {
+    return view('admin.announcements.index', [
+        'title' => 'Publikasi Pengumuman - Duta PNJ',
     ]);
-})->name('jury.interviews.index');
-
-Route::get('/jury/scoring/{candidate}', function ($candidate) {
-    return view('jury.scoring', [
-        'title' => 'Form Penilaian - Duta PNJ',
-        'candidateId' => $candidate,
-    ]);
-})->name('jury.scoring.show');
-
-Route::get('/jury/scores', function () {
-    return view('jury.scores', [
-        'title' => 'Riwayat Penilaian - Duta PNJ',
-    ]);
-})->name('jury.scores.index');
+})->name('admin.announcements.index');

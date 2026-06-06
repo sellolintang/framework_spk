@@ -2,14 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ArasResult extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'period_id',
         'candidate_id',
@@ -23,9 +20,9 @@ class ArasResult extends Model
     protected $casts = [
         'period_id' => 'integer',
         'candidate_id' => 'integer',
-        'final_rank' => 'integer',
         'total_score' => 'decimal:6',
         'utility_score' => 'decimal:6',
+        'final_rank' => 'integer',
         'calculated_by' => 'integer',
         'calculated_at' => 'datetime',
     ];

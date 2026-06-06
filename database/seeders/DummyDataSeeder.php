@@ -226,28 +226,89 @@ class DummyDataSeeder extends Seeder
         |--------------------------------------------------------------------------
         | Criteria
         |--------------------------------------------------------------------------
+        |
+        | Kriteria disesuaikan dengan data asli Excel Duta PNJ Batch 5.
+        | Di file Excel, Opening & Public Speaking muncul di dua bagian penilaian.
+        | Karena tabel criteria punya unique period_id + name, bobotnya digabung
+        | menjadi 0.1300 agar total bobot tetap 1.0000.
+        |
         */
 
         $criteria = [
             [
                 'code' => 'C1',
                 'name' => 'Ekspresi, Etika, Kepercayaan Diri',
-                'weight' => 0.2500,
+                'weight' => 0.0800,
             ],
             [
                 'code' => 'C2',
-                'name' => 'Berpikir Kritis, Kreatif, Inisiatif',
-                'weight' => 0.2000,
+                'name' => 'Berpikir Kritis, Kreatif, Inisiatif,',
+                'weight' => 0.0800,
             ],
             [
                 'code' => 'C3',
                 'name' => 'Komitmen Terhadap Duta dan Institusi',
-                'weight' => 0.3000,
+                'weight' => 0.0700,
             ],
             [
                 'code' => 'C4',
                 'name' => 'Kemampuan Komunikasi, Argumentasi',
-                'weight' => 0.2500,
+                'weight' => 0.0800,
+            ],
+            [
+                'code' => 'C5',
+                'name' => 'Personaliti Kepemimpinan & Keteraturan',
+                'weight' => 0.0700,
+            ],
+            [
+                'code' => 'C6',
+                'name' => 'Manajemen Emosi',
+                'weight' => 0.0500,
+            ],
+            [
+                'code' => 'C7',
+                'name' => 'Sikap Kooperatif',
+                'weight' => 0.0500,
+            ],
+            [
+                'code' => 'C8',
+                'name' => 'Penilaian Diri dan Tujuan Pribadi',
+                'weight' => 0.0500,
+            ],
+            [
+                'code' => 'C9',
+                'name' => 'Opening & Public Speaking',
+                'weight' => 0.1300,
+            ],
+            [
+                'code' => 'C10',
+                'name' => 'Wawasan & Keilmuan',
+                'weight' => 0.1000,
+            ],
+            [
+                'code' => 'C11',
+                'name' => 'Kemampuan Berbahasa inggris',
+                'weight' => 0.0800,
+            ],
+            [
+                'code' => 'C12',
+                'name' => 'Personaliti Kepemimpinan',
+                'weight' => 0.0500,
+            ],
+            [
+                'code' => 'C13',
+                'name' => 'Body Language',
+                'weight' => 0.0400,
+            ],
+            [
+                'code' => 'C14',
+                'name' => 'Kreativitas dan Invoasi',
+                'weight' => 0.0400,
+            ],
+            [
+                'code' => 'C15',
+                'name' => 'Grooming & Look',
+                'weight' => 0.0300,
             ],
         ];
 
@@ -272,23 +333,30 @@ class DummyDataSeeder extends Seeder
         |--------------------------------------------------------------------------
         | Jury Criteria
         |--------------------------------------------------------------------------
+        |
+        | Pembagian mengikuti sheet asli:
+        | Juri 1: C1-C8
+        | Juri 2: C1-C4 dan C9-C12
+        | Juri 3: C1-C4, C9, C13-C15
+        |
         */
 
-        $juryCriteria = [
-            [$juri1Id, $criterionIds['C1']],
-            [$juri1Id, $criterionIds['C4']],
-            [$juri2Id, $criterionIds['C2']],
-            [$juri3Id, $criterionIds['C3']],
+        $juryCriteriaMap = [
+            $juri1Id => ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8'],
+            $juri2Id => ['C1', 'C2', 'C3', 'C4', 'C9', 'C10', 'C11', 'C12'],
+            $juri3Id => ['C1', 'C2', 'C3', 'C4', 'C9', 'C13', 'C14', 'C15'],
         ];
 
-        foreach ($juryCriteria as [$juryId, $criterionId]) {
-            DB::table('jury_criteria')->insert([
-                'period_id' => $periodId,
-                'user_id' => $juryId,
-                'criterion_id' => $criterionId,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+        foreach ($juryCriteriaMap as $juryId => $criterionCodes) {
+            foreach ($criterionCodes as $code) {
+                DB::table('jury_criteria')->insert([
+                    'period_id' => $periodId,
+                    'user_id' => $juryId,
+                    'criterion_id' => $criterionIds[$code],
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
         }
 
         /*
@@ -324,43 +392,129 @@ class DummyDataSeeder extends Seeder
         |--------------------------------------------------------------------------
         | Scores
         |--------------------------------------------------------------------------
+        |
+        | Nilai lama tetap dipertahankan pada kriteria lama yang masih ada.
+        | Nilai tambahan dibuat agar setiap scored candidate punya nilai lengkap
+        | sesuai pembagian kriteria juri di atas.
+        |
         */
 
-        $scores = [
-            [$candidate3Id, $juri1Id, $criterionIds['C1'], 88],
-            [$candidate3Id, $juri1Id, $criterionIds['C4'], 90],
-            [$candidate3Id, $juri2Id, $criterionIds['C2'], 85],
-            [$candidate3Id, $juri3Id, $criterionIds['C3'], 92],
-
-            [$candidate2Id, $juri1Id, $criterionIds['C1'], 80],
-            [$candidate2Id, $juri1Id, $criterionIds['C4'], 84],
-            [$candidate2Id, $juri2Id, $criterionIds['C2'], 82],
-            [$candidate2Id, $juri3Id, $criterionIds['C3'], 86],
+        $scoreRows = [
+            [
+                'candidate_id' => $candidate3Id,
+                'jury_id' => $juri1Id,
+                'scores' => [
+                    'C1' => 88,
+                    'C2' => 87,
+                    'C3' => 92,
+                    'C4' => 90,
+                    'C5' => 86,
+                    'C6' => 84,
+                    'C7' => 88,
+                    'C8' => 85,
+                ],
+            ],
+            [
+                'candidate_id' => $candidate3Id,
+                'jury_id' => $juri2Id,
+                'scores' => [
+                    'C1' => 89,
+                    'C2' => 85,
+                    'C3' => 92,
+                    'C4' => 90,
+                    'C9' => 88,
+                    'C10' => 86,
+                    'C11' => 85,
+                    'C12' => 87,
+                ],
+            ],
+            [
+                'candidate_id' => $candidate3Id,
+                'jury_id' => $juri3Id,
+                'scores' => [
+                    'C1' => 90,
+                    'C2' => 88,
+                    'C3' => 92,
+                    'C4' => 89,
+                    'C9' => 88,
+                    'C13' => 87,
+                    'C14' => 86,
+                    'C15' => 88,
+                ],
+            ],
+            [
+                'candidate_id' => $candidate2Id,
+                'jury_id' => $juri1Id,
+                'scores' => [
+                    'C1' => 80,
+                    'C2' => 83,
+                    'C3' => 86,
+                    'C4' => 84,
+                    'C5' => 82,
+                    'C6' => 80,
+                    'C7' => 81,
+                    'C8' => 83,
+                ],
+            ],
+            [
+                'candidate_id' => $candidate2Id,
+                'jury_id' => $juri2Id,
+                'scores' => [
+                    'C1' => 82,
+                    'C2' => 82,
+                    'C3' => 86,
+                    'C4' => 84,
+                    'C9' => 83,
+                    'C10' => 82,
+                    'C11' => 80,
+                    'C12' => 82,
+                ],
+            ],
+            [
+                'candidate_id' => $candidate2Id,
+                'jury_id' => $juri3Id,
+                'scores' => [
+                    'C1' => 83,
+                    'C2' => 84,
+                    'C3' => 86,
+                    'C4' => 84,
+                    'C9' => 84,
+                    'C13' => 82,
+                    'C14' => 81,
+                    'C15' => 83,
+                ],
+            ],
         ];
 
-        foreach ($scores as [$candidateId, $juryId, $criterionId, $score]) {
-            DB::table('scores')->insert([
-                'period_id' => $periodId,
-                'candidate_id' => $candidateId,
-                'user_id' => $juryId,
-                'criterion_id' => $criterionId,
-                'score' => $score,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+        foreach ($scoreRows as $row) {
+            foreach ($row['scores'] as $criterionCode => $score) {
+                DB::table('scores')->insert([
+                    'period_id' => $periodId,
+                    'candidate_id' => $row['candidate_id'],
+                    'user_id' => $row['jury_id'],
+                    'criterion_id' => $criterionIds[$criterionCode],
+                    'score' => $score,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
         }
 
         /*
         |--------------------------------------------------------------------------
         | ARAS Results
         |--------------------------------------------------------------------------
+        |
+        | Data ini hanya dummy awal. Untuk hasil final, tetap jalankan fitur
+        | hitung ulang ARAS dari aplikasi agar hasil mengikuti logic service terbaru.
+        |
         */
 
         DB::table('aras_results')->insert([
             [
                 'period_id' => $periodId,
                 'candidate_id' => $candidate3Id,
-                'total_score' => 0.912500,
+                'total_score' => 0.339634,
                 'utility_score' => 1.000000,
                 'final_rank' => 1,
                 'calculated_by' => $adminId,
@@ -371,8 +525,8 @@ class DummyDataSeeder extends Seeder
             [
                 'period_id' => $periodId,
                 'candidate_id' => $candidate2Id,
-                'total_score' => 0.830000,
-                'utility_score' => 0.909589,
+                'total_score' => 0.320731,
+                'utility_score' => 0.944342,
                 'final_rank' => 2,
                 'calculated_by' => $adminId,
                 'calculated_at' => $now,

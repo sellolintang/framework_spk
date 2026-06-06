@@ -21,7 +21,7 @@
                 <a href="#beranda" class="border-b-2 border-blue-900 pb-1 text-blue-900">Beranda</a>
                 <a href="#persyaratan" class="hover:text-blue-900">Persyaratan</a>
                 <a href="#jadwal" class="hover:text-blue-900">Jadwal</a>
-                <a href="#pengumuman" class="hover:text-blue-900">Pengumuman</a>
+                <a href="{{ route('public.results') }}" class="hover:text-blue-900">Pengumuman</a>
             </div>
 
             <div class="flex items-center gap-3">

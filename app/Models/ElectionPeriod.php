@@ -13,6 +13,10 @@ class ElectionPeriod extends Model
         'interview_start',
         'interview_end',
         'status',
+        'is_result_published',
+        'result_published_at',
+        'result_published_by',
+        'announcement_note',
     ];
 
     protected function casts(): array
@@ -23,6 +27,8 @@ class ElectionPeriod extends Model
             'registration_end' => 'datetime',
             'interview_start' => 'datetime',
             'interview_end' => 'datetime',
+            'is_result_published' => 'boolean',
+            'result_published_at' => 'datetime',
         ];
     }
 

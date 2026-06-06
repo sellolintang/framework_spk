@@ -41,8 +41,8 @@
         ],
         [
             'label' => 'Monitoring Penilaian',
-            'url' => url('/admin/scores'),
-            'active' => 'admin/scores*',
+            'url' => url('/admin/monitoring'),
+            'active' => 'admin/monitoring*',
             'icon' => 'chart',
         ],
         [
