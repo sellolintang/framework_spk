@@ -221,8 +221,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     let periods = [];
 
-    const API_BASE_URL = '/api';
-
     const elements = {
         alertBox: document.getElementById('alertBox'),
 
@@ -256,102 +254,18 @@ document.addEventListener('DOMContentLoaded', function () {
         btnResetFilter: document.getElementById('btnResetFilter'),
     };
 
-    function getToken() {
-        const token = localStorage.getItem('duta_kampus_token');
-
-        if (!token || token === 'null' || token === 'undefined') {
-            return null;
-        }
-
-        return token;
-    }
-
-    function getUser() {
-        const user = localStorage.getItem('duta_kampus_user');
-
-        if (!user) {
-            return null;
-        }
-
-        try {
-            return JSON.parse(user);
-        } catch (error) {
-            return null;
-        }
-    }
-
-    function redirectToLogin(message = 'Sesi login tidak valid. Silakan login kembali.') {
-        localStorage.removeItem('duta_kampus_token');
-        localStorage.removeItem('duta_kampus_user');
-
-        alert(message);
-        window.location.href = '/login';
-    }
-
-    function checkAuth() {
-        const token = getToken();
-
-        if (!token) {
-            redirectToLogin();
-            return false;
-        }
-
-        return true;
-    }
-
     async function apiRequest(endpoint, options = {}) {
-        if (!checkAuth()) {
-            throw new Error('Token tidak tersedia.');
+        if (!window.DutaAdmin) {
+            throw new Error('Helper request admin tidak ditemukan.');
         }
 
-        const token = getToken();
+        const cleanEndpoint = endpoint.startsWith('/api')
+            ? endpoint.slice(4)
+            : endpoint;
 
-        const headers = {
-            'Accept': 'application/json',
-            'Authorization': 'Bearer ' + token,
-            ...(options.headers || {}),
-        };
+        const result = await DutaAdmin.request(cleanEndpoint, options);
 
-        if (options.body && !(options.body instanceof FormData)) {
-            headers['Content-Type'] = 'application/json';
-        }
-
-        const response = await fetch(API_BASE_URL + endpoint, {
-            ...options,
-            headers,
-        });
-
-        const text = await response.text();
-        let result = {};
-
-        if (text) {
-            try {
-                result = JSON.parse(text);
-            } catch (error) {
-                result = {
-                    message: text,
-                };
-            }
-        }
-
-        if (response.status === 401) {
-            redirectToLogin('Token login tidak valid atau sudah kedaluwarsa. Silakan login kembali.');
-            throw new Error('Unauthenticated');
-        }
-
-        if (response.status === 403) {
-            throw new Error(result.message || 'Anda tidak memiliki akses ke fitur ini.');
-        }
-
-        if (!response.ok) {
-            const error = new Error(result.message || 'Request gagal.');
-            error.errors = result.errors || null;
-            error.status = response.status;
-            error.response = result;
-            throw error;
-        }
-
-        return result;
+        return result || {};
     }
 
     function extractPeriodItems(result) {
@@ -359,23 +273,47 @@ document.addEventListener('DOMContentLoaded', function () {
             return result;
         }
 
-        if (Array.isArray(result.data?.data)) {
+        if (Array.isArray(result?.data?.data)) {
             return result.data.data;
         }
 
-        if (Array.isArray(result.data)) {
+        if (Array.isArray(result?.data)) {
             return result.data;
         }
 
-        if (Array.isArray(result.items)) {
+        if (Array.isArray(result?.items)) {
             return result.items;
         }
 
-        if (Array.isArray(result.data?.items)) {
+        if (Array.isArray(result?.data?.items)) {
             return result.data.items;
         }
 
         return [];
+    }
+
+    function getErrorMessage(error, fallback = 'Terjadi kesalahan.') {
+        if (typeof error === 'string') {
+            return error;
+        }
+
+        if (error?.message) {
+            return error.message;
+        }
+
+        return fallback;
+    }
+
+    function getErrorValidation(error) {
+        if (error?.errors) {
+            return error.errors;
+        }
+
+        if (error?.response?.errors) {
+            return error.response.errors;
+        }
+
+        return null;
     }
 
     function showAlert(message, type = 'success') {
@@ -399,11 +337,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (errors) {
             html += '<ul class="mt-2 list-disc pl-5">';
+
             Object.values(errors).forEach(function (messages) {
-                messages.forEach(function (item) {
-                    html += `<li>${item}</li>`;
-                });
+                if (Array.isArray(messages)) {
+                    messages.forEach(function (item) {
+                        html += `<li>${item}</li>`;
+                    });
+                    return;
+                }
+
+                html += `<li>${messages}</li>`;
             });
+
             html += '</ul>';
         }
 
@@ -588,8 +533,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: 'GET',
             });
 
-            console.log('Response /api/periods:', result);
-
             periods = extractPeriodItems(result);
 
             renderStats();
@@ -603,7 +546,7 @@ document.addEventListener('DOMContentLoaded', function () {
             elements.periodTable.innerHTML = `
                 <tr>
                     <td colspan="5" class="px-4 py-6 text-center text-sm text-red-600">
-                        ${error.message || 'Data periode gagal dimuat.'}
+                        ${getErrorMessage(error, 'Data periode gagal dimuat.')}
                     </td>
                 </tr>
             `;
@@ -692,7 +635,11 @@ document.addEventListener('DOMContentLoaded', function () {
             await loadPeriods();
         } catch (error) {
             console.error('Gagal menyimpan periode:', error);
-            showFormError(error.message || 'Periode gagal disimpan.', error.errors);
+
+            showFormError(
+                getErrorMessage(error, 'Periode gagal disimpan.'),
+                getErrorValidation(error)
+            );
         } finally {
             elements.btnSubmitForm.disabled = false;
             elements.btnSubmitForm.textContent = id ? 'Update Periode' : 'Simpan Periode';
@@ -715,7 +662,7 @@ document.addEventListener('DOMContentLoaded', function () {
             await loadPeriods();
         } catch (error) {
             console.error('Gagal menghapus periode:', error);
-            showAlert(error.message || 'Periode gagal dihapus.', 'error');
+            showAlert(getErrorMessage(error, 'Periode gagal dihapus.'), 'error');
         }
     }
 
@@ -725,23 +672,23 @@ document.addEventListener('DOMContentLoaded', function () {
         loadPeriods();
     }
 
-    elements.btnOpenForm.addEventListener('click', openForm);
-    elements.btnCloseForm.addEventListener('click', closeForm);
-    elements.btnResetForm.addEventListener('click', resetForm);
-    elements.periodForm.addEventListener('submit', savePeriod);
+    elements.btnOpenForm?.addEventListener('click', openForm);
+    elements.btnCloseForm?.addEventListener('click', closeForm);
+    elements.btnResetForm?.addEventListener('click', resetForm);
+    elements.periodForm?.addEventListener('submit', savePeriod);
 
-    elements.btnFilter.addEventListener('click', loadPeriods);
-    elements.btnResetFilter.addEventListener('click', resetFilter);
+    elements.btnFilter?.addEventListener('click', loadPeriods);
+    elements.btnResetFilter?.addEventListener('click', resetFilter);
 
-    elements.filterStatus.addEventListener('change', loadPeriods);
+    elements.filterStatus?.addEventListener('change', loadPeriods);
 
-    elements.filterYear.addEventListener('keyup', function (event) {
+    elements.filterYear?.addEventListener('keyup', function (event) {
         if (event.key === 'Enter') {
             loadPeriods();
         }
     });
 
-    elements.periodTable.addEventListener('click', function (event) {
+    elements.periodTable?.addEventListener('click', function (event) {
         const button = event.target.closest('button');
 
         if (!button) {

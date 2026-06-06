@@ -14,6 +14,7 @@
         }
     </style>
 </head>
+
 <body class="min-h-screen bg-[#F3F6FA] text-[#20232A]">
     <div class="min-h-screen flex flex-col">
 
@@ -28,6 +29,7 @@
                             <path d="M16 16V23" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
                         </svg>
                     </div>
+
                     <span class="text-[24px] font-bold tracking-[-0.03em] text-[#00288E]">
                         Duta PNJ
                     </span>
@@ -45,23 +47,23 @@
 
         {{-- Main --}}
         <main class="flex-1 flex items-center justify-center px-6 py-14">
-            <section class="w-full max-w-[1100px] bg-white border border-[#C9D1E3] rounded-[14px] shadow-[0_12px_30px_rgba(15,23,42,0.08)] overflow-hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-[0.92fr_1.08fr] min-h-[624px]">
+            <section class="w-full max-w-275 bg-white border border-[#C9D1E3] rounded-[14px] shadow-[0_12px_30px_rgba(15,23,42,0.08)] overflow-hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-[0.92fr_1.08fr] min-h-156">
 
                     {{-- Left Panel --}}
                     <aside class="bg-[#00288E] text-white px-12 py-12 flex flex-col justify-between">
                         <div>
-                            <h1 class="max-w-[390px] text-[40px] leading-[1.16] font-bold tracking-[-0.04em]">
+                            <h1 class="max-w-97.5 text-[40px] leading-[1.16] font-bold tracking-[-0.04em]">
                                 Sistem Seleksi Duta PNJ
                             </h1>
 
-                            <p class="mt-6 max-w-[430px] text-[19px] leading-8 text-white/85">
+                            <p class="mt-6 max-w-107.5 text-[19px] leading-8 text-white/85">
                                 Selamat datang di portal administrasi dan penjurian.
                                 Silakan masuk untuk mengelola pendaftar atau memberikan penilaian hasil seleksi.
                             </p>
 
                             <div class="mt-7 space-y-4">
-                                <div class="rounded-[8px] border border-white/25 bg-white/[0.08] px-5 py-4">
+                                <div class="rounded-lg border border-white/25 bg-white/8 px-5 py-4">
                                     <div class="flex gap-4">
                                         <div class="mt-1 text-white">
                                             <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" aria-hidden="true">
@@ -69,6 +71,7 @@
                                                 <path d="M9.2 12L11.2 14L15.5 9.8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                             </svg>
                                         </div>
+
                                         <div>
                                             <h2 class="text-[15px] font-bold">
                                                 Akses Administrator
@@ -80,7 +83,7 @@
                                     </div>
                                 </div>
 
-                                <div class="rounded-[8px] border border-white/25 bg-white/[0.08] px-5 py-4">
+                                <div class="rounded-lg border border-white/25 bg-white/8 px-5 py-4">
                                     <div class="flex gap-4">
                                         <div class="mt-1 text-white">
                                             <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" aria-hidden="true">
@@ -88,6 +91,7 @@
                                                 <path d="M8 16L16.5 7.5C17.3 6.7 17.3 5.4 16.5 4.6C15.7 3.8 14.4 3.8 13.6 4.6L5 13.2V16H8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
                                             </svg>
                                         </div>
+
                                         <div>
                                             <h2 class="text-[15px] font-bold">
                                                 Akses Juri
@@ -107,7 +111,7 @@
                     </aside>
 
                     {{-- Login Form --}}
-                    <section class="px-10 py-12 lg:px-[96px] flex items-center">
+                    <section class="px-10 py-12 lg:px-24 flex items-center">
                         <div class="w-full">
                             <div class="mb-9">
                                 <h2 class="text-[26px] font-bold tracking-[-0.03em] text-[#20232A]">
@@ -119,7 +123,7 @@
                             </div>
 
                             @if ($errors->any())
-                                <div class="mb-6 rounded-[8px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] text-red-700">
+                                <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-[14px] text-red-700">
                                     <p class="font-semibold">Login belum berhasil.</p>
                                     <ul class="mt-1 list-disc pl-5">
                                         @foreach ($errors->all() as $error)
@@ -130,13 +134,13 @@
                             @endif
 
                             @if (session('status'))
-                                <div class="mb-6 rounded-[8px] border border-green-200 bg-green-50 px-4 py-3 text-[14px] text-green-700">
+                                <div class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-[14px] text-green-700">
                                     {{ session('status') }}
                                 </div>
                             @endif
 
-                            <div id="loginAlert" class="hidden mb-6 rounded-[8px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] text-red-700"></div>
-                            <form id="loginForm" class="space-y-6">
+                            <form id="loginForm" method="POST" action="{{ route('login.store') }}" class="space-y-6">
+                                @csrf
 
                                 <div>
                                     <label for="email" class="block mb-2 text-[14px] font-bold text-[#20232A]">
@@ -160,7 +164,7 @@
                                             required
                                             autofocus
                                             placeholder="contoh@pnj.ac.id"
-                                            class="w-full h-[58px] rounded-[8px] border border-[#C8CFDE] bg-[#F7F8FB] pl-12 pr-4 text-[16px] text-[#20232A] placeholder:text-[#767B87] outline-none transition focus:bg-white focus:border-[#00288E] focus:ring-2 focus:ring-[#00288E]/15"
+                                            class="w-full h-14.5 rounded-lg border border-[#C8CFDE] bg-[#F7F8FB] pl-12 pr-4 text-[16px] text-[#20232A] placeholder:text-[#767B87] outline-none transition focus:bg-white focus:border-[#00288E] focus:ring-2 focus:ring-[#00288E]/15"
                                         >
                                     </div>
                                 </div>
@@ -192,7 +196,7 @@
                                             autocomplete="current-password"
                                             required
                                             placeholder="••••••••"
-                                            class="w-full h-[58px] rounded-[8px] border border-[#C8CFDE] bg-[#F7F8FB] pl-12 pr-12 text-[16px] text-[#20232A] placeholder:text-[#767B87] outline-none transition focus:bg-white focus:border-[#00288E] focus:ring-2 focus:ring-[#00288E]/15"
+                                            class="w-full h-14.5 rounded-lg border border-[#C8CFDE] bg-[#F7F8FB] pl-12 pr-12 text-[16px] text-[#20232A] placeholder:text-[#767B87] outline-none transition focus:bg-white focus:border-[#00288E] focus:ring-2 focus:ring-[#00288E]/15"
                                         >
 
                                         <button
@@ -212,7 +216,7 @@
                                 <button
                                     id="loginButton"
                                     type="submit"
-                                    class="w-full h-[53px] rounded-[8px] bg-[#00288E] text-white text-[15px] font-bold hover:bg-[#001F73] transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    class="w-full h-13.25 rounded-lg bg-[#00288E] text-white text-[15px] font-bold hover:bg-[#001F73] transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
                                     <span id="loginButtonText">Masuk Ke Dashboard</span>
 
@@ -223,7 +227,7 @@
                                 </button>
                             </form>
 
-                            <div class="mt-16 rounded-[8px] bg-[#F1F3F7] border-l-4 border-[#8A6400] px-5 py-4">
+                            <div class="mt-16 rounded-lg bg-[#F1F3F7] border-l-4 border-[#8A6400] px-5 py-4">
                                 <div class="flex gap-4">
                                     <div class="pt-0.5 text-[#8A6400]">
                                         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" aria-hidden="true">
@@ -264,79 +268,15 @@
     </div>
 
     <script>
-    function togglePassword() {
-        const input = document.getElementById('password');
-        input.type = input.type === 'password' ? 'text' : 'password';
-    }
+        function togglePassword() {
+            const input = document.getElementById('password');
 
-    const loginForm = document.getElementById('loginForm');
-    const loginAlert = document.getElementById('loginAlert');
-    const loginButton = document.getElementById('loginButton');
-    const loginButtonText = document.getElementById('loginButtonText');
-
-    loginForm.addEventListener('submit', async function (event) {
-        event.preventDefault();
-
-        loginAlert.classList.add('hidden');
-        loginAlert.innerHTML = '';
-
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-
-        loginButton.disabled = true;
-        loginButtonText.textContent = 'Memproses...';
-
-        try {
-            const response = await fetch("{{ url('/api/login') }}", {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    email: email,
-                    password: password,
-                }),
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                let errorMessage = result.message || 'Login gagal. Silakan periksa kembali email dan password.';
-
-                if (result.errors) {
-                    errorMessage = Object.values(result.errors)
-                        .flat()
-                        .join('<br>');
-                }
-
-                loginAlert.innerHTML = errorMessage;
-                loginAlert.classList.remove('hidden');
+            if (!input) {
                 return;
             }
 
-            const token = result.data.token;
-            const user = result.data.user;
-
-            localStorage.setItem('duta_kampus_token', token);
-            localStorage.setItem('duta_kampus_user', JSON.stringify(user));
-
-            if (user.role === 'admin') {
-                window.location.href = "{{ url('/admin/dashboard') }}";
-            } else if (user.role === 'juri') {
-                window.location.href = "{{ url('/jury/dashboard') }}";
-            } else {
-                loginAlert.innerHTML = 'Role user tidak dikenali.';
-                loginAlert.classList.remove('hidden');
-            }
-        } catch (error) {
-            loginAlert.innerHTML = 'Tidak dapat terhubung ke server. Pastikan Laravel sedang berjalan.';
-            loginAlert.classList.remove('hidden');
-        } finally {
-            loginButton.disabled = false;
-            loginButtonText.textContent = 'Masuk Ke Dashboard';
+            input.type = input.type === 'password' ? 'text' : 'password';
         }
-    });
-</script>
+    </script>
 </body>
 </html>

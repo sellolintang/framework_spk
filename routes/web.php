@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\WebLoginController;
 
 //Public Pages
 
@@ -23,155 +24,162 @@ Route::get('/registration-success', function () {
     return view('public.registration-success');
 })->name('registration.success');
 
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
+Route::get('/login', [WebLoginController::class, 'create'])->name('login');
+Route::post('/login', [WebLoginController::class, 'store'])->name('login.store');
+
+Route::post('/logout', [WebLoginController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('logout');
 
 
 //Admin Pages
 
-Route::prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', function () {
+Route::middleware(['auth', 'role:admin'])->group(function () {
+
+    Route::get('/admin/dashboard', function () {
         return view('admin.dashboard', [
             'title' => 'Dashboard Admin - Duta PNJ',
         ]);
-    })->name('dashboard');
+    })->name('admin.dashboard');
 
-    Route::get('/periods', function () {
+    Route::get('/admin/periods', function () {
         return view('admin.periods.index', [
-            'title' => 'Manajemen Periode Seleksi - Duta PNJ',
+            'title' => 'Periode Pemilihan - Admin',
         ]);
-    })->name('periods.index');
+    })->name('admin.periods.index');
 
-    Route::get('/candidates', function () {
+    Route::get('/admin/candidates', function () {
         return view('admin.candidates.index', [
-            'title' => 'Data Pendaftar - Duta PNJ',
+            'title' => 'Data Pendaftar - Admin',
         ]);
-    })->name('candidates.index');
+    })->name('admin.candidates.index');
 
-    Route::get('/criteria', function () {
+    Route::get('/admin/criteria', function () {
         return view('admin.criteria.index', [
-            'title' => 'Manajemen Kriteria - Duta PNJ',
+            'title' => 'Kriteria Penilaian - Admin',
         ]);
-    })->name('criteria.index');
+    })->name('admin.criteria.index');
 
-    Route::get('/juries', function () {
+    Route::get('/admin/juries', function () {
         return view('admin.juries.index', [
-            'title' => 'Akun Juri - Duta PNJ',
+            'title' => 'Data Juri - Admin',
         ]);
-    })->name('juries.index');
+    })->name('admin.juries.index');
 
-    Route::get('/juries/create', function () {
+    Route::get('/admin/juries/create', function () {
         return view('admin.juries.create', [
-            'title' => 'Tambah Akun Juri - Duta PNJ',
+            'title' => 'Tambah Juri - Admin',
         ]);
-    })->name('juries.create');
+    })->name('admin.juries.create');
 
-    Route::get('/juries/assign-criteria', function () {
+    Route::get('/admin/juries/assign-criteria', function () {
         return view('admin.juries.assign-criteria', [
-            'title' => 'Assign Kriteria Juri - Duta PNJ',
+            'title' => 'Pembagian Kriteria Juri - Admin',
         ]);
-    })->name('juries.assign-criteria');
+    })->name('admin.juries.assign-criteria');
 
-    Route::get('/juries/{jury}', function ($jury) {
+    Route::get('/admin/juries/{jury}', function ($jury) {
         return view('admin.juries.show', [
-            'title' => 'Detail Akun Juri - Duta PNJ',
+            'title' => 'Detail Juri - Admin',
             'juryId' => $jury,
         ]);
-    })->name('juries.show');
+    })->name('admin.juries.show');
 
-    Route::get('/juries/{jury}/edit', function ($jury) {
+    Route::get('/admin/juries/{jury}/edit', function ($jury) {
         return view('admin.juries.edit', [
-            'title' => 'Edit Akun Juri - Duta PNJ',
+            'title' => 'Edit Juri - Admin',
             'juryId' => $jury,
         ]);
-    })->name('juries.edit');
+    })->name('admin.juries.edit');
 
-    Route::get('/interviews', function () {
+    Route::get('/admin/interviews', function () {
         return view('admin.interviews.index', [
-            'title' => 'Jadwal Wawancara - Duta PNJ',
+            'title' => 'Jadwal Wawancara - Admin',
         ]);
-    })->name('interviews.index');
+    })->name('admin.interviews.index');
 
-    Route::get('/interviews/create', function () {
+    Route::get('/admin/interviews/create', function () {
         return view('admin.interviews.create', [
-            'title' => 'Generate Jadwal Wawancara - Duta PNJ',
+            'title' => 'Tambah Jadwal Wawancara - Admin',
         ]);
-    })->name('interviews.create');
+    })->name('admin.interviews.create');
 
-    Route::get('/interviews/{interview}', function ($interview) {
+    Route::get('/admin/interviews/{interview}', function ($interview) {
         return view('admin.interviews.show', [
-            'title' => 'Detail Jadwal Wawancara - Duta PNJ',
+            'title' => 'Detail Jadwal Wawancara - Admin',
             'interviewId' => $interview,
         ]);
-    })->name('interviews.show');
+    })->name('admin.interviews.show');
 
-    Route::get('/interviews/{interview}/edit', function ($interview) {
+    Route::get('/admin/interviews/{interview}/edit', function ($interview) {
         return view('admin.interviews.edit', [
-            'title' => 'Edit Jadwal Wawancara - Duta PNJ',
+            'title' => 'Edit Jadwal Wawancara - Admin',
             'interviewId' => $interview,
         ]);
-    })->name('interviews.edit');
+    })->name('admin.interviews.edit');
 
-    Route::get('/monitoring', function () {
+    Route::get('/admin/monitoring', function () {
         return view('admin.monitoring.index', [
-            'title' => 'Monitoring Penilaian - Duta PNJ',
+            'title' => 'Monitoring Penilaian - Admin',
         ]);
-    })->name('monitoring.index');
+    })->name('admin.monitoring.index');
 
-    Route::get('/aras', function () {
+    Route::get('/admin/aras', function () {
         return view('admin.aras.index', [
-            'title' => 'Hasil ARAS - Duta PNJ',
+            'title' => 'Perhitungan ARAS - Admin',
         ]);
-    })->name('aras.index');
+    })->name('admin.aras.index');
 
-    Route::get('/announcements', function () {
+    Route::get('/admin/announcements', function () {
         return view('admin.announcements.index', [
-            'title' => 'Publikasi Pengumuman - Duta PNJ',
+            'title' => 'Pengumuman Hasil - Admin',
         ]);
-    })->name('announcements.index');
+    })->name('admin.announcements.index');
+
 });
 
 
 //Jury Pages
 
-Route::prefix('jury')->name('jury.')->group(function () {
-    Route::get('/dashboard', function () {
+Route::middleware(['auth', 'role:juri'])->group(function () {
+
+    Route::get('/jury/dashboard', function () {
         return view('jury.dashboard', [
             'title' => 'Dashboard Juri - Duta PNJ',
         ]);
-    })->name('dashboard');
+    })->name('jury.dashboard');
 
-    Route::get('/scoring', function () {
+    Route::get('/jury/scoring', function () {
         return view('jury.scoring.index', [
-            'title' => 'Penilaian Peserta - Duta PNJ',
+            'title' => 'Penilaian Kandidat - Juri',
         ]);
-    })->name('scoring.index');
+    })->name('jury.scoring.index');
 
-    Route::get('/scoring/{candidate}', function ($candidate) {
+    Route::get('/jury/scoring/{candidate}', function ($candidate) {
         return view('jury.scoring.detail', [
-            'title' => 'Detail Peserta - Duta PNJ',
+            'title' => 'Detail Kandidat - Juri',
             'candidateId' => $candidate,
         ]);
-    })->name('scoring.detail');
+    })->name('jury.scoring.detail');
 
-    Route::get('/scoring/{candidate}/form', function ($candidate) {
+    Route::get('/jury/scoring/{candidate}/form', function ($candidate) {
         return view('jury.scoring.form', [
-            'title' => 'Form Penilaian Peserta - Duta PNJ',
+            'title' => 'Form Penilaian Kandidat - Juri',
             'candidateId' => $candidate,
         ]);
-    })->name('scoring.form');
+    })->name('jury.scoring.form');
 
-    Route::get('/history', function () {
+    Route::get('/jury/history', function () {
         return view('jury.history.index', [
-            'title' => 'Riwayat Penilaian - Duta PNJ',
+            'title' => 'Riwayat Penilaian - Juri',
         ]);
-    })->name('history.index');
+    })->name('jury.history.index');
 
-    Route::get('/history/{candidate}', function ($candidate) {
+    Route::get('/jury/history/{candidate}', function ($candidate) {
         return view('jury.history.show', [
-            'title' => 'Detail Riwayat Penilaian - Duta PNJ',
+            'title' => 'Detail Riwayat Penilaian - Juri',
             'candidateId' => $candidate,
         ]);
-    })->name('history.show');
+    })->name('jury.history.show');
+
 });

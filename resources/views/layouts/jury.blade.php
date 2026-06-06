@@ -50,44 +50,55 @@
         </main>
     </div>
 
+    @php
+        $authUser = auth()->user();
+        $authUserData = $authUser
+            ? $authUser->only(['id', 'name', 'email', 'role'])
+            : null;
+    @endphp
+
     <script>
         window.DutaJury = {
-            token() {
-                return localStorage.getItem('duta_kampus_token');
-            },
+            apiBase: "{{ url('/api') }}",
+            loginUrl: "{{ route('login') }}",
+            logoutUrl: "{{ route('logout') }}",
+            csrfToken: "{{ csrf_token() }}",
+            currentUser: @json($authUserData),
 
             user() {
-                try {
-                    return JSON.parse(localStorage.getItem('duta_kampus_user') || 'null');
-                } catch (error) {
-                    return null;
-                }
+                return this.currentUser;
+            },
+
+            headers() {
+                return {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': this.csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                };
             },
 
             async request(path, options = {}) {
-                const token = this.token();
-
-                if (!token) {
-                    window.location.href = '/login';
-                    throw new Error('Token login tidak ditemukan.');
-                }
-
-                const response = await fetch(`/api${path}`, {
+                const response = await fetch(`${this.apiBase}${path}`, {
                     ...options,
+                    credentials: 'same-origin',
                     headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
+                        ...this.headers(),
                         ...(options.headers || {}),
                     },
                 });
 
-                const result = await response.json();
+                if (response.status === 401 || response.status === 419) {
+                    window.location.href = this.loginUrl;
+                    throw new Error('Sesi login sudah berakhir.');
+                }
+
+                const result = await response.json().catch(() => null);
 
                 if (!response.ok) {
-                    const message = result.errors
+                    const message = result?.errors
                         ? Object.values(result.errors).flat().join(' ')
-                        : result.message;
+                        : result?.message;
 
                     throw new Error(message || 'Terjadi kesalahan.');
                 }
@@ -100,28 +111,41 @@
             const user = DutaJury.user();
 
             if (!user || user.role !== 'juri') {
-                window.location.href = '/login';
+                window.location.href = DutaJury.loginUrl;
                 return;
             }
 
-            document.getElementById('juryTopbarName').textContent = user.name || 'Juri';
-            document.getElementById('jurySidebarName').textContent = user.name || 'Juri';
-            document.getElementById('jurySidebarEmail').textContent = user.email || '-';
+            const juryTopbarName = document.getElementById('juryTopbarName');
+            const jurySidebarName = document.getElementById('jurySidebarName');
+            const jurySidebarEmail = document.getElementById('jurySidebarEmail');
+
+            if (juryTopbarName) juryTopbarName.textContent = user.name || 'Juri';
+            if (jurySidebarName) jurySidebarName.textContent = user.name || 'Juri';
+            if (jurySidebarEmail) jurySidebarEmail.textContent = user.email || '-';
         });
 
         async function logoutJury() {
             try {
-                await DutaJury.request('/logout', {
+                await fetch(DutaJury.logoutUrl, {
                     method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'text/html,application/xhtml+xml',
+                        'X-CSRF-TOKEN': DutaJury.csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
                 });
             } catch (error) {
-                // tetap hapus localStorage walau request logout gagal
+                console.error(error);
+            } finally {
+                localStorage.removeItem('duta_kampus_token');
+                localStorage.removeItem('duta_kampus_user');
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('token');
+
+                window.location.href = DutaJury.loginUrl;
             }
-
-            localStorage.removeItem('duta_kampus_token');
-            localStorage.removeItem('duta_kampus_user');
-
-            window.location.href = '/login';
         }
 
         async function loadPeriodOptions(selectId = 'periodIdInput') {

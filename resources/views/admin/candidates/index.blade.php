@@ -245,7 +245,7 @@
 
 {{-- Toast --}}
 <div id="toast"
-     class="fixed right-5 top-5 z-[60] hidden max-w-sm rounded-xl border border-gray-200 bg-white px-5 py-4 text-sm shadow-xl">
+     class="fixed right-5 top-5 z-60 hidden max-w-sm rounded-xl border border-gray-200 bg-white px-5 py-4 text-sm shadow-xl">
     <p id="toastTitle" class="font-bold text-gray-900"></p>
     <p id="toastMessage" class="mt-1 text-gray-500"></p>
 </div>
@@ -258,64 +258,40 @@
     let perPage = 10;
     let selectedCandidate = null;
 
-    const token = localStorage.getItem('duta_kampus_token')
-        || localStorage.getItem('auth_token')
-        || localStorage.getItem('access_token')
-        || localStorage.getItem('token');
-
     document.addEventListener('DOMContentLoaded', function () {
-        if (!token) {
-            alert('Token login tidak ditemukan. Silakan login ulang.');
-            window.location.href = '/login';
-            return;
-        }
-
         loadCandidates();
 
-        document.getElementById('filterBtn').addEventListener('click', function () {
+        document.getElementById('filterBtn')?.addEventListener('click', function () {
             currentPage = 1;
             loadCandidates();
         });
 
-        document.getElementById('keywordInput').addEventListener('keyup', function (event) {
+        document.getElementById('keywordInput')?.addEventListener('keyup', function (event) {
             if (event.key === 'Enter') {
                 currentPage = 1;
                 loadCandidates();
             }
         });
 
-        document.getElementById('statusInput').addEventListener('change', function () {
+        document.getElementById('statusInput')?.addEventListener('change', function () {
             currentPage = 1;
             loadCandidates();
         });
     });
 
     async function apiFetch(url, options = {}) {
-        const response = await fetch(url, {
-            ...options,
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-                ...(options.headers || {}),
-            },
-        });
-
-        const result = await response.json().catch(() => ({}));
-
-        if (response.status === 401) {
-            alert('Sesi login habis. Silakan login ulang.');
-            localStorage.removeItem('duta_kampus_token');
-            localStorage.removeItem('duta_kampus_user');
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('token');
-            window.location.href = '/login';
-            return;
+        if (!window.DutaAdmin) {
+            throw new Error('Helper request admin tidak ditemukan.');
         }
 
-        if (!response.ok) {
-            throw new Error(result.message || 'Terjadi kesalahan.');
+        const endpoint = url.startsWith('/api')
+            ? url.slice(4)
+            : url;
+
+        const result = await DutaAdmin.request(endpoint, options);
+
+        if (!result) {
+            throw new Error('Sesi login sudah berakhir. Silakan login ulang.');
         }
 
         return result;

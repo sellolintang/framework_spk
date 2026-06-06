@@ -171,74 +171,94 @@
 @endsection
 
 @push('scripts')
-    <script>
-        let dashboardData = null;
+<script>
+    let dashboardData = null;
 
-        document.addEventListener('DOMContentLoaded', async function () {
-            const user = DutaJury.user();
+    document.addEventListener('DOMContentLoaded', async function () {
+        const user = DutaJury.user();
 
-            if (user?.name) {
-                document.getElementById('welcomeText').textContent =
-                    `Selamat datang, ${user.name}. Pantau ringkasan penilaian dan lanjutkan penilaian peserta.`;
+        if (user?.name) {
+            setText(
+                'welcomeText',
+                `Selamat datang, ${user.name}. Pantau ringkasan penilaian dan lanjutkan penilaian peserta.`
+            );
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const selectedPeriodId = params.get('period_id') || '1';
+
+        try {
+            await loadPeriodOptions('periodIdInput');
+
+            const periodInput = document.getElementById('periodIdInput');
+
+            if (periodInput && selectedPeriodId) {
+                periodInput.value = selectedPeriodId;
             }
+        } catch (error) {
+            console.error('Gagal memuat pilihan periode:', error);
+        }
 
-            const params = new URLSearchParams(window.location.search);
-            const periodId = params.get('period_id') || '1';
+        await loadDashboard();
 
-            await loadPeriodOptions('periodIdInput', periodId);
-
+        document.getElementById('periodIdInput')?.addEventListener('change', function () {
             loadDashboard();
-
-            document.getElementById('periodIdInput')?.addEventListener('change', function () {
-                loadDashboard();
-            });
         });
+    });
 
-        async function loadDashboard() {
-            const periodId = getPeriodId();
+    async function loadDashboard() {
+        const periodId = getPeriodId();
 
-            setLoadingState();
+        setLoadingState();
 
-            try {
-                const params = new URLSearchParams({
-                    period_id: periodId,
-                });
+        try {
+            const params = new URLSearchParams({
+                period_id: periodId,
+            });
 
-                const result = await DutaJury.request(`/jury/dashboard-summary?${params.toString()}`);
+            const result = await DutaJury.request(`/jury/dashboard-summary?${params.toString()}`);
 
-                dashboardData = result?.data;
+            dashboardData = result?.data || {};
 
-                renderSummary();
-                renderCandidateProgress();
-                renderAssignedCriteria();
-                renderRecentScores();
-            } catch (error) {
-                showAlert('danger', getErrorMessage(error));
-                renderErrorState(getErrorMessage(error));
-            }
+            renderSummary();
+            renderCandidateProgress();
+            renderAssignedCriteria();
+            renderRecentScores();
+        } catch (error) {
+            const message = getErrorMessage(error);
+
+            console.error('Gagal memuat dashboard juri:', error);
+
+            showAlert('danger', message);
+            renderErrorState(message);
+        }
+    }
+
+    function renderSummary() {
+        const summary = dashboardData?.summary || {};
+
+        setText('assignedCriteriaCount', summary.assigned_criteria_count || 0);
+        setText('completedCandidateCount', summary.completed_candidate_count || 0);
+        setText('incompleteCandidateCount', summary.incomplete_candidate_count || 0);
+        setText('completionPercentage', `${formatNumber(summary.completion_percentage || 0)}%`);
+    }
+
+    function renderCandidateProgress() {
+        const tableBody = document.getElementById('candidateProgressBody');
+
+        if (!tableBody) {
+            return;
         }
 
-        function renderSummary() {
-            const summary = dashboardData?.summary || {};
+        const candidates = dashboardData?.candidates || [];
 
-            setText('assignedCriteriaCount', summary.assigned_criteria_count || 0);
-            setText('completedCandidateCount', summary.completed_candidate_count || 0);
-            setText('incompleteCandidateCount', summary.incomplete_candidate_count || 0);
-            setText('completionPercentage', `${formatNumber(summary.completion_percentage || 0)}%`);
+        if (!candidates.length) {
+            tableBody.innerHTML = emptyRow(5, 'Belum ada peserta yang dapat dinilai.');
+            return;
         }
 
-        function renderCandidateProgress() {
-            const tableBody = document.getElementById('candidateProgressBody');
-            const candidates = dashboardData?.candidates || [];
-
-            if (!candidates.length) {
-                tableBody.innerHTML = emptyRow(5, 'Belum ada peserta yang dapat dinilai.');
-                return;
-            }
-
-            const result = await response.json();
-
-            tableBody.innerHTML = candidates.slice(0, 8).map(item => `
+        tableBody.innerHTML = candidates.slice(0, 8).map(function (item) {
+            return `
                 <tr class="hover:bg-slate-50">
                     <td class="px-6 py-4">
                         <p class="font-extrabold text-slate-900">${escapeHtml(item.full_name || '-')}</p>
@@ -257,38 +277,46 @@
                     </td>
 
                     <td class="px-6 py-4 font-semibold text-slate-700">
-                        ${item.average_score === null ? '-' : formatNumber(item.average_score)}
+                        ${item.average_score === null || item.average_score === undefined ? '-' : formatNumber(item.average_score)}
                     </td>
 
                     <td class="px-6 py-4">
                         ${renderCompleteBadge(item.is_complete)}
                     </td>
                 </tr>
-            `).join('');
+            `;
+        }).join('');
+    }
+
+    function renderAssignedCriteria() {
+        const target = document.getElementById('assignedCriteriaList');
+
+        if (!target) {
+            return;
         }
 
-        function renderAssignedCriteria() {
-            const target = document.getElementById('assignedCriteriaList');
-            const criteria = dashboardData?.assigned_criteria || [];
+        const criteria = dashboardData?.assigned_criteria || [];
 
-            if (!criteria.length) {
-                target.innerHTML = `
-                    <div class="rounded-md border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm font-semibold text-yellow-800">
-                        Belum ada kriteria yang ditugaskan kepadamu.
-                    </div>
-                `;
-                return;
-            }
-
+        if (!criteria.length) {
             target.innerHTML = `
-                <div class="space-y-3">
-                    ${criteria.map(item => `
+                <div class="rounded-md border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm font-semibold text-yellow-800">
+                    Belum ada kriteria yang ditugaskan kepadamu.
+                </div>
+            `;
+            return;
+        }
+
+        target.innerHTML = `
+            <div class="space-y-3">
+                ${criteria.map(function (item) {
+                    return `
                         <div class="rounded-lg border border-slate-200 px-4 py-3">
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <p class="text-sm font-extrabold text-[#00288E]">
                                         ${escapeHtml(item.code || '-')}
                                     </p>
+
                                     <p class="mt-1 text-sm font-semibold text-slate-900">
                                         ${escapeHtml(item.name || '-')}
                                     </p>
@@ -303,27 +331,34 @@
                                 Rentang nilai: ${escapeHtml(item.min_score ?? 0)} - ${escapeHtml(item.max_score ?? 100)}
                             </p>
                         </div>
-                    `).join('')}
-                </div>
-            `;
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+
+    function renderRecentScores() {
+        const target = document.getElementById('recentScoresList');
+
+        if (!target) {
+            return;
         }
 
-        function renderRecentScores() {
-            const target = document.getElementById('recentScoresList');
-            const scores = dashboardData?.recent_scores || [];
+        const scores = dashboardData?.recent_scores || [];
 
-            if (!scores.length) {
-                target.innerHTML = `
-                    <p class="text-sm text-slate-500">
-                        Belum ada aktivitas penilaian.
-                    </p>
-                `;
-                return;
-            }
-
+        if (!scores.length) {
             target.innerHTML = `
-                <div class="space-y-3">
-                    ${scores.map(item => `
+                <p class="text-sm text-slate-500">
+                    Belum ada aktivitas penilaian.
+                </p>
+            `;
+            return;
+        }
+
+        target.innerHTML = `
+            <div class="space-y-3">
+                ${scores.map(function (item) {
+                    return `
                         <div class="rounded-lg border border-slate-200 px-4 py-3">
                             <p class="text-sm font-extrabold text-slate-900">
                                 ${escapeHtml(item.candidate_name || '-')}
@@ -343,138 +378,177 @@
                                 </span>
                             </div>
                         </div>
-                    `).join('')}
-                </div>
-            `;
-        }
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
 
-        function renderProgress(value) {
-            const percent = Number(value || 0);
+    function renderProgress(value) {
+        const percent = Number(value || 0);
+        const safePercent = Math.min(Math.max(percent, 0), 100);
 
+        return `
+            <div class="h-2 w-32 overflow-hidden rounded-full bg-slate-100">
+                <div class="h-full rounded-full bg-[#00288E]" style="width: ${safePercent}%"></div>
+            </div>
+
+            <p class="mt-1 text-xs font-bold text-slate-700">
+                ${formatNumber(safePercent)}%
+            </p>
+        `;
+    }
+
+    function renderCompleteBadge(isComplete) {
+        if (isComplete) {
             return `
-                <div class="h-2 w-32 overflow-hidden rounded-full bg-slate-100">
-                    <div class="h-full rounded-full bg-[#00288E]" style="width: ${Math.min(percent, 100)}%"></div>
-                </div>
-                <p class="mt-1 text-xs font-bold text-slate-700">${formatNumber(percent)}%</p>
-            `;
-        }
-
-        function renderCompleteBadge(isComplete) {
-            if (isComplete) {
-                return `
-                    <span class="inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
-                        Lengkap
-                    </span>
-                `;
-            }
-
-            return `
-                <span class="inline-flex rounded-full bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-700">
-                    Perlu Dinilai
+                <span class="inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
+                    Lengkap
                 </span>
             `;
         }
 
-        function setLoadingState() {
-            document.getElementById('candidateProgressBody').innerHTML = emptyRow(5, 'Memuat progress peserta...');
-            document.getElementById('assignedCriteriaList').innerHTML = `<p class="text-sm text-slate-500">Memuat kriteria...</p>`;
-            document.getElementById('recentScoresList').innerHTML = `<p class="text-sm text-slate-500">Memuat aktivitas...</p>`;
+        return `
+            <span class="inline-flex rounded-full bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-700">
+                Perlu Dinilai
+            </span>
+        `;
+    }
+
+    function setLoadingState() {
+        const tableBody = document.getElementById('candidateProgressBody');
+        const criteriaList = document.getElementById('assignedCriteriaList');
+        const recentScoresList = document.getElementById('recentScoresList');
+
+        if (tableBody) {
+            tableBody.innerHTML = emptyRow(5, 'Memuat progress peserta...');
         }
 
-        function renderErrorState(message) {
-            document.getElementById('candidateProgressBody').innerHTML = errorRow(5, message);
-            document.getElementById('assignedCriteriaList').innerHTML = `
+        if (criteriaList) {
+            criteriaList.innerHTML = `<p class="text-sm text-slate-500">Memuat kriteria...</p>`;
+        }
+
+        if (recentScoresList) {
+            recentScoresList.innerHTML = `<p class="text-sm text-slate-500">Memuat aktivitas...</p>`;
+        }
+    }
+
+    function renderErrorState(message) {
+        const tableBody = document.getElementById('candidateProgressBody');
+        const criteriaList = document.getElementById('assignedCriteriaList');
+        const recentScoresList = document.getElementById('recentScoresList');
+
+        if (tableBody) {
+            tableBody.innerHTML = errorRow(5, message);
+        }
+
+        if (criteriaList) {
+            criteriaList.innerHTML = `
                 <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
                     ${escapeHtml(message)}
                 </div>
             `;
-            document.getElementById('recentScoresList').innerHTML = `
+        }
+
+        if (recentScoresList) {
+            recentScoresList.innerHTML = `
                 <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
                     ${escapeHtml(message)}
                 </div>
             `;
         }
+    }
 
-        function emptyRow(colspan, message) {
-            return `
-                <tr>
-                    <td colspan="${colspan}" class="px-6 py-8 text-center text-slate-500">
-                        ${escapeHtml(message)}
-                    </td>
-                </tr>
-            `;
+    function emptyRow(colspan, message) {
+        return `
+            <tr>
+                <td colspan="${colspan}" class="px-6 py-8 text-center text-slate-500">
+                    ${escapeHtml(message)}
+                </td>
+            </tr>
+        `;
+    }
+
+    function errorRow(colspan, message) {
+        return `
+            <tr>
+                <td colspan="${colspan}" class="px-6 py-8 text-center text-red-600">
+                    ${escapeHtml(message)}
+                </td>
+            </tr>
+        `;
+    }
+
+    function getPeriodId() {
+        return document.getElementById('periodIdInput')?.value || 1;
+    }
+
+    function formatNumber(value) {
+        return new Intl.NumberFormat('id-ID', {
+            maximumFractionDigits: 2,
+        }).format(Number(value || 0));
+    }
+
+    function formatDateTime(value) {
+        if (!value) {
+            return '-';
         }
 
-        function errorRow(colspan, message) {
-            return `
-                <tr>
-                    <td colspan="${colspan}" class="px-6 py-8 text-center text-red-600">
-                        ${escapeHtml(message)}
-                    </td>
-                </tr>
-            `;
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) {
+            return value;
         }
 
-        function getPeriodId() {
-            return document.getElementById('periodIdInput')?.value || 1;
+        return date.toLocaleString('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    }
+
+    function showAlert(type, message) {
+        const alert = document.getElementById('pageAlert');
+
+        if (!alert) {
+            return;
         }
 
-        function formatNumber(value) {
-            return new Intl.NumberFormat('id-ID', {
-                maximumFractionDigits: 2,
-            }).format(Number(value || 0));
+        const classes = {
+            success: 'border-green-200 bg-green-50 text-green-800',
+            danger: 'border-red-200 bg-red-50 text-red-800',
+            info: 'border-blue-200 bg-blue-50 text-blue-800',
+        };
+
+        alert.className = `mb-5 rounded-md border px-4 py-3 text-sm ${classes[type] || classes.info}`;
+        alert.textContent = message;
+        alert.classList.remove('hidden');
+
+        setTimeout(function () {
+            alert.classList.add('hidden');
+        }, 5000);
+    }
+
+    function getErrorMessage(error) {
+        return error?.message || 'Terjadi kesalahan.';
+    }
+
+    function setText(id, value) {
+        const element = document.getElementById(id);
+
+        if (element) {
+            element.textContent = value;
         }
+    }
 
-        function formatDateTime(value) {
-            if (!value) return '-';
-
-            const date = new Date(value);
-
-            if (Number.isNaN(date.getTime())) return value;
-
-            return date.toLocaleString('id-ID', {
-                day: '2-digit',
-                month: 'short',
-                hour: '2-digit',
-                minute: '2-digit',
-            });
-        }
-
-        function showAlert(type, message) {
-            const alert = document.getElementById('pageAlert');
-
-            const classes = {
-                success: 'border-green-200 bg-green-50 text-green-800',
-                danger: 'border-red-200 bg-red-50 text-red-800',
-                info: 'border-blue-200 bg-blue-50 text-blue-800',
-            };
-
-            alert.className = `mb-5 rounded-md border px-4 py-3 text-sm ${classes[type] || classes.info}`;
-            alert.textContent = message;
-            alert.classList.remove('hidden');
-
-            setTimeout(() => alert.classList.add('hidden'), 5000);
-        }
-
-        function getErrorMessage(error) {
-            return error?.message || 'Terjadi kesalahan.';
-        }
-
-        function setText(id, value) {
-            const element = document.getElementById(id);
-
-            if (element) {
-                element.textContent = value;
-            }
-        }
-
-        function escapeHtml(value) {
-            return String(value)
-                .replaceAll('&', '&amp;')
-                .replaceAll('<', '&lt;')
-                .replaceAll('>', '&gt;')
-                .replaceAll('"', '&quot;')
-                .replaceAll("'", '&#039;');
-        }
-    </script>
+    function escapeHtml(value) {
+        return String(value)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+</script>
 @endpush

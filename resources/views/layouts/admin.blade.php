@@ -18,7 +18,7 @@
 
     @include('partials.navbar')
 
-    <main class="min-h-screen pt-[54px] lg:pl-[258px]">
+    <main class="min-h-screen pt-13.5 lg:pl-64.5">
         <div class="px-6 py-9 lg:px-7">
             @yield('content')
         </div>
@@ -26,34 +26,37 @@
         @include('partials.footer')
     </main>
 
+    @php
+        $authUser = auth()->user();
+        $authUserData = $authUser
+            ? $authUser->only(['id', 'name', 'email', 'role'])
+            : null;
+    @endphp
+
     <script>
         window.DutaAdmin = {
             apiBase: "{{ url('/api') }}",
-            loginUrl: "{{ url('/login') }}",
-
-            getToken() {
-                return localStorage.getItem('duta_kampus_token');
-            },
+            loginUrl: "{{ route('login') }}",
+            logoutUrl: "{{ route('logout') }}",
+            csrfToken: "{{ csrf_token() }}",
+            user: @json($authUserData),
 
             getUser() {
-                try {
-                    return JSON.parse(localStorage.getItem('duta_kampus_user') || 'null');
-                } catch (error) {
-                    return null;
-                }
+                return this.user;
             },
 
             clearAuth() {
                 localStorage.removeItem('duta_kampus_token');
                 localStorage.removeItem('duta_kampus_user');
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('token');
             },
 
             guard() {
-                const token = this.getToken();
                 const user = this.getUser();
 
-                if (!token || !user || user.role !== 'admin') {
-                    this.clearAuth();
+                if (!user || user.role !== 'admin') {
                     window.location.replace(this.loginUrl);
                     return false;
                 }
@@ -65,22 +68,23 @@
                 return {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.getToken()}`,
+                    'X-CSRF-TOKEN': this.csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
                 };
             },
 
             async request(endpoint, options = {}) {
                 const response = await fetch(`${this.apiBase}${endpoint}`, {
                     ...options,
+                    credentials: 'same-origin',
                     headers: {
                         ...this.headers(),
                         ...(options.headers || {}),
                     },
                 });
 
-                if (response.status === 401) {
-                    this.clearAuth();
-                    window.location.replace(this.loginUrl);
+                if (response.status === 401 || response.status === 419) {
+                    console.warn('API 401: session belum terbaca oleh endpoint API.');
                     return null;
                 }
 
@@ -97,9 +101,14 @@
 
             async logout() {
                 try {
-                    await fetch(`${this.apiBase}/logout`, {
+                    await fetch(this.logoutUrl, {
                         method: 'POST',
-                        headers: this.headers(),
+                        credentials: 'same-origin',
+                        headers: {
+                            'Accept': 'text/html,application/xhtml+xml',
+                            'X-CSRF-TOKEN': this.csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
                     });
                 } catch (error) {
                     console.error(error);
@@ -110,7 +119,7 @@
             },
         };
 
-        DutaAdmin.guard();
+        //DutaAdmin.guard();
 
         document.addEventListener('DOMContentLoaded', function () {
             const user = DutaAdmin.getUser();
