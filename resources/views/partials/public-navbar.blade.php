@@ -1,28 +1,26 @@
-@props([
-    'active' => 'home',
-])
-
 @php
+    $active = $active ?? 'home';
+
     $menus = [
         [
             'label' => 'Beranda',
             'url' => url('/#beranda'),
-            'active' => 'home',
+            'key' => 'beranda',
         ],
         [
             'label' => 'Persyaratan',
             'url' => url('/#persyaratan'),
-            'active' => 'persyaratan',
+            'key' => 'persyaratan',
         ],
         [
             'label' => 'Jadwal',
             'url' => url('/#jadwal'),
-            'active' => 'jadwal',
+            'key' => 'jadwal',
         ],
         [
             'label' => 'Pengumuman',
             'url' => route('public.results'),
-            'active' => 'results',
+            'key' => 'results',
         ],
     ];
 @endphp
@@ -48,14 +46,16 @@
             </div>
         </a>
 
-        <nav class="hidden items-center gap-8 text-sm font-bold text-slate-600 md:flex">
+        <nav class="hidden items-center gap-8 text-sm font-bold md:flex">
             @foreach ($menus as $menu)
+                @php
+                    $isActive = $active === $menu['key'] || ($active === 'home' && $menu['key'] === 'beranda');
+                @endphp
+
                 <a
                     href="{{ $menu['url'] }}"
-                    class="{{ $active === $menu['active']
-                        ? 'border-b-2 border-blue-900 pb-1 text-blue-900'
-                        : 'pb-1 transition hover:text-blue-900'
-                    }}"
+                    data-public-nav="{{ $menu['key'] }}"
+                    class="border-b-2 pb-1 transition hover:text-blue-900 {{ $isActive ? 'border-blue-900 text-blue-900' : 'border-transparent text-slate-600' }}"
                 >
                     {{ $menu['label'] }}
                 </a>

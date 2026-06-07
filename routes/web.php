@@ -1,12 +1,26 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Models\ElectionPeriod;
 use App\Http\Controllers\Auth\WebLoginController;
 
 //Public Pages
 
 Route::get('/', function () {
-    return view('public.home');
+    $activePeriod = ElectionPeriod::query()
+        ->whereIn('status', ['registration', 'interview', 'scoring', 'finished'])
+        ->orderByDesc('election_year')
+        ->first();
+
+    if (! $activePeriod) {
+        $activePeriod = ElectionPeriod::query()
+            ->orderByDesc('election_year')
+            ->first();
+    }
+
+    return view('public.home', [
+        'activePeriod' => $activePeriod,
+    ]);
 })->name('home');
 
 Route::get('/pengumuman', function () {

@@ -6,18 +6,75 @@
     <title>Pemilihan Duta PNJ</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
 </head>
 
 <body class="bg-slate-50 text-slate-800 antialiased">
 
+    @php
+        use Carbon\Carbon;
+
+        $period = $activePeriod ?? null;
+
+        $year = $period?->election_year ?? now()->year;
+        $status = $period?->status ?? 'draft';
+
+        $statusLabels = [
+            'draft' => "Pendaftaran {$year} Belum Dibuka",
+            'registration' => "Pendaftaran {$year} Dibuka",
+            'interview' => "Tahap Wawancara {$year}",
+            'scoring' => "Tahap Penilaian {$year}",
+            'finished' => "Seleksi {$year} Selesai",
+        ];
+
+        $heroBadge = $statusLabels[$status] ?? "Seleksi Duta PNJ {$year}";
+
+        $currentStep = match ($status) {
+            'registration' => 1,
+            'interview' => 3,
+            'scoring' => 4,
+            'finished' => 5,
+            default => 1,
+        };
+
+        $formatDate = function ($value) {
+            if (! $value) {
+                return '-';
+            }
+
+            return Carbon::parse($value)->locale('id')->translatedFormat('d M Y, H.i');
+        };
+
+        $registrationStart = data_get($period, 'registration_start')
+            ?? data_get($period, 'registration_start_at');
+
+        $registrationEnd = data_get($period, 'registration_end')
+            ?? data_get($period, 'registration_end_at');
+
+        $interviewStart = data_get($period, 'interview_start')
+            ?? data_get($period, 'interview_start_at');
+
+        $interviewEnd = data_get($period, 'interview_end')
+            ?? data_get($period, 'interview_end_at');
+
+        $announcementDate = data_get($period, 'announcement_date')
+            ?? data_get($period, 'announcement_at')
+            ?? data_get($period, 'result_announcement_at');
+    @endphp
+
     @include('partials.public-navbar', ['active' => 'home'])
 
     {{-- HERO --}}
-    <section id="beranda" class="bg-linear-to-br from-slate-50 to-slate-100">
+    <section id="beranda" class="scroll-mt-24 bg-linear-to-br from-slate-50 to-slate-100">
         <div class="mx-auto grid max-w-7xl items-center gap-12 px-6 py-20 lg:grid-cols-2 lg:px-8 lg:py-24">
             <div>
                 <span class="inline-flex rounded-full bg-yellow-300 px-4 py-1.5 text-sm font-semibold text-yellow-900">
-                    Pendaftaran 2026 Dibuka
+                    {{ $heroBadge }}
                 </span>
 
                 <h1 class="mt-6 max-w-2xl text-4xl font-extrabold leading-tight tracking-tight text-blue-900 md:text-5xl">
@@ -41,7 +98,7 @@
                 <div class="absolute -inset-4 rounded-3xl bg-blue-100 blur-2xl"></div>
 
                 <div class="relative overflow-hidden rounded-3xl bg-white shadow-xl ring-1 ring-slate-200">
-                    <img src="{{ asset('images/duta-hero.jpg') }}"
+                    <img src="{{ asset('images/Duta PNJ.jpg') }}"
                          alt="Finalis Duta PNJ"
                          class="h-65 w-full object-cover md:h-90">
                 </div>
@@ -91,7 +148,7 @@
     </section>
 
     {{-- PERSYARATAN --}}
-    <section id="persyaratan" class="bg-slate-100 py-16">
+    <section id="persyaratan" class="scroll-mt-24 bg-slate-100 py-16">
         <div class="mx-auto max-w-7xl px-6 lg:px-8">
             <div class="flex flex-col justify-between gap-4 md:flex-row md:items-end">
                 <div>
@@ -185,7 +242,7 @@
     </section>
 
     {{-- JADWAL --}}
-    <section id="jadwal" class="bg-slate-50 py-16">
+    <section id="jadwal" class="scroll-mt-24 bg-slate-50 py-16">
         <div class="mx-auto grid max-w-7xl gap-10 px-6 lg:grid-cols-3 lg:px-8">
             <div>
                 <h2 class="text-2xl font-bold text-blue-900">Jadwal Penting</h2>
@@ -213,23 +270,61 @@
             <div class="space-y-5 lg:col-span-2">
                 @php
                     $schedules = [
-                        ['MEI', '15-30', 'Pendaftaran Online', 'Pengisian formulir dan unggah dokumen administrasi.', true],
-                        ['JUNI', '05', 'Pengumuman Lolos Berkas', 'Hasil verifikasi administrasi pendaftar.', false],
-                        ['JUNI', '10', 'Wawancara dan Uji Bakat', 'Seleksi mendalam oleh juri kampus.', false],
-                        ['JULI', '01', 'Malam Inagurasi', 'Penetapan Duta PNJ terpilih.', false],
+                        [
+                            'month' => $registrationStart ? Carbon::parse($registrationStart)->locale('id')->translatedFormat('M') : '-',
+                            'date' => $registrationStart ? Carbon::parse($registrationStart)->translatedFormat('d') : '-',
+                            'title' => 'Pendaftaran Online',
+                            'description' => $registrationStart && $registrationEnd
+                                ? $formatDate($registrationStart) . ' sampai ' . $formatDate($registrationEnd)
+                                : 'Jadwal pendaftaran akan diumumkan.',
+                            'active' => $status === 'registration',
+                        ],
+                        [
+                            'month' => $registrationEnd ? Carbon::parse($registrationEnd)->locale('id')->translatedFormat('M') : '-',
+                            'date' => $registrationEnd ? Carbon::parse($registrationEnd)->translatedFormat('d') : '-',
+                            'title' => 'Verifikasi Administrasi',
+                            'description' => 'Panitia memeriksa kelengkapan data dan dokumen pendaftar.',
+                            'active' => false,
+                        ],
+                        [
+                            'month' => $interviewStart ? Carbon::parse($interviewStart)->locale('id')->translatedFormat('M') : '-',
+                            'date' => $interviewStart ? Carbon::parse($interviewStart)->translatedFormat('d') : '-',
+                            'title' => 'Wawancara',
+                            'description' => $interviewStart && $interviewEnd
+                                ? $formatDate($interviewStart) . ' sampai ' . $formatDate($interviewEnd)
+                                : 'Jadwal wawancara akan diumumkan setelah verifikasi administrasi.',
+                            'active' => $status === 'interview',
+                        ],
+                        [
+                            'month' => $announcementDate ? Carbon::parse($announcementDate)->locale('id')->translatedFormat('M') : '-',
+                            'date' => $announcementDate ? Carbon::parse($announcementDate)->translatedFormat('d') : '-',
+                            'title' => 'Pengumuman Hasil',
+                            'description' => $announcementDate
+                                ? $formatDate($announcementDate)
+                                : 'Pengumuman hasil akan diinformasikan melalui halaman pengumuman.',
+                            'active' => $status === 'finished',
+                        ],
                     ];
                 @endphp
 
                 @foreach ($schedules as $schedule)
                     <div class="flex gap-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                        <div class="flex h-16 w-20 shrink-0 flex-col items-center justify-center rounded-lg {{ $schedule[4] ? 'bg-blue-900 text-white' : 'bg-slate-200 text-slate-700' }}">
-                            <span class="text-xs font-semibold uppercase">{{ $schedule[0] }}</span>
-                            <span class="text-xl font-bold">{{ $schedule[1] }}</span>
+                        <div class="flex h-16 w-20 shrink-0 flex-col items-center justify-center rounded-lg {{ $schedule['active'] ? 'bg-blue-900 text-white' : 'bg-slate-200 text-slate-700' }}">
+                            <span class="text-xs font-semibold uppercase">
+                                {{ $schedule['month'] }}
+                            </span>
+                            <span class="text-xl font-bold">
+                                {{ $schedule['date'] }}
+                            </span>
                         </div>
 
                         <div>
-                            <h3 class="font-bold text-slate-900">{{ $schedule[2] }}</h3>
-                            <p class="mt-1 text-sm leading-6 text-slate-600">{{ $schedule[3] }}</p>
+                            <h3 class="font-bold text-slate-900">
+                                {{ $schedule['title'] }}
+                            </h3>
+                            <p class="mt-1 text-sm leading-6 text-slate-600">
+                                {{ $schedule['description'] }}
+                            </p>
                         </div>
                     </div>
                 @endforeach
@@ -335,6 +430,43 @@
     </section>
 
     @include('partials.public-footer')
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const navLinks = document.querySelectorAll('[data-public-nav]');
+            const sections = document.querySelectorAll('#beranda, #persyaratan, #jadwal');
+
+            function setActiveNav(sectionId) {
+                navLinks.forEach(function (link) {
+                    const key = link.dataset.publicNav;
+
+                    link.classList.remove('border-blue-900', 'text-blue-900');
+                    link.classList.add('border-transparent', 'text-slate-600');
+
+                    if (key === sectionId) {
+                        link.classList.remove('border-transparent', 'text-slate-600');
+                        link.classList.add('border-blue-900', 'text-blue-900');
+                    }
+                });
+            }
+
+            const observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        setActiveNav(entry.target.id);
+                    }
+                });
+            }, {
+                root: null,
+                rootMargin: '-35% 0px -55% 0px',
+                threshold: 0,
+            });
+
+            sections.forEach(function (section) {
+                observer.observe(section);
+            });
+        });
+    </script>
 
 </body>
 </html>
