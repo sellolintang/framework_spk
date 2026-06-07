@@ -334,7 +334,7 @@
     </section>
 
     {{-- FAQ --}}
-    <section id="pengumuman" class="bg-slate-100 py-16">
+    <section id="faq" class="bg-slate-100 py-16">
         <div class="mx-auto max-w-3xl px-6">
             <div class="text-center">
                 <h2 class="text-2xl font-bold text-blue-900">Pertanyaan Sering Diajukan</h2>

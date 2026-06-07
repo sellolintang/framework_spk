@@ -368,6 +368,17 @@ class JuryScoringController extends Controller
                 $periodId = (int) $request->period_id;
                 $candidateId = (int) $candidate;
 
+                $isPublished = (bool) DB::table('election_periods')
+                    ->where('id', $periodId)
+                    ->value('is_result_published');
+
+                if ($isPublished) {
+                    return $this->error(
+                        'Penilaian sudah dikunci karena hasil seleksi telah dipublikasikan.',
+                        403
+                    );
+                }
+
                 $candidateExists = DB::table('candidates')
                     ->where('id', $candidateId)
                     ->where('period_id', $periodId)
