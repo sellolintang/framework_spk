@@ -136,7 +136,7 @@
     </section>
 
     {{-- Modal Reset Password --}}
-    <div id="resetPasswordModal" class="fixed inset-0 z-[90] hidden">
+    <div id="resetPasswordModal" class="fixed inset-0 z-90 hidden">
         <div class="absolute inset-0 bg-slate-900/50" onclick="closeResetPasswordModal()"></div>
 
         <div class="relative mx-auto mt-24 w-[92%] max-w-md">
@@ -347,7 +347,7 @@
                         <td class="px-6 py-4">
                             <div class="flex flex-wrap items-center gap-2">
                                 <a
-                                    href="/admin/juries/${jury.id}"
+                                    href="/admin/juries/${jury.id}?period_id=${getPeriodId()}"
                                     class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
                                 >
                                     Detail

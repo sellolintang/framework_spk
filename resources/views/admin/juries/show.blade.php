@@ -302,6 +302,9 @@
 <script>
     const juryId = @json($juryId);
 
+    const pageParams = new URLSearchParams(window.location.search);
+    const selectedPeriodId = pageParams.get('period_id') || '1';
+
     document.addEventListener('DOMContentLoaded', function () {
         loadJuryDetail();
     });
@@ -310,7 +313,7 @@
         showLoading();
 
         try {
-            const result = await DutaAdmin.request(`/juries/${juryId}`);
+            const result = await DutaAdmin.request(`/juries/${juryId}?period_id=${selectedPeriodId}`);
             const jury = normalizeJury(result);
 
             if (!jury) {
@@ -331,31 +334,49 @@
         }
 
         if (result?.data?.jury) {
-            return result.data.jury;
+            const jury = result.data.jury;
+
+            if (!Array.isArray(jury.criteria) && Array.isArray(result.data.criteria)) {
+                jury.criteria = result.data.criteria;
+            }
+
+            return jury;
+        }
+
+        if (result?.jury) {
+            const jury = result.jury;
+
+            if (!Array.isArray(jury.criteria) && Array.isArray(result.criteria)) {
+                jury.criteria = result.criteria;
+            }
+
+            return jury;
         }
 
         if (result?.data) {
             return result.data;
         }
 
-        if (result?.jury) {
-            return result.jury;
-        }
-
         return result;
     }
 
     function getCriteria(jury) {
-        if (Array.isArray(jury.criteria)) {
+        if (Array.isArray(jury?.criteria)) {
             return jury.criteria;
         }
 
-        if (Array.isArray(jury.assigned_criteria)) {
+        if (Array.isArray(jury?.assigned_criteria)) {
             return jury.assigned_criteria;
         }
 
-        if (Array.isArray(jury.criteria_data)) {
+        if (Array.isArray(jury?.criteria_data)) {
             return jury.criteria_data;
+        }
+
+        if (Array.isArray(jury?.jury_criteria)) {
+            return jury.jury_criteria.map(function (item) {
+                return item.criterion || item.criteria || item;
+            });
         }
 
         return [];
@@ -402,7 +423,7 @@
             tableBody.innerHTML = `
                 <tr>
                     <td colspan="6" class="px-5 py-8 text-center text-slate-500">
-                        Belum ada kriteria yang ditugaskan kepada juri ini.
+                        Belum ada kriteria yang ditugaskan kepada juri ini pada periode ini.
                     </td>
                 </tr>
             `;
