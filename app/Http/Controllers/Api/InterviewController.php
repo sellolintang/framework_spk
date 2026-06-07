@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 use Throwable;
+use App\Mail\InterviewScheduledMail;
+use Illuminate\Support\Facades\Mail;
 
 
 class InterviewController extends Controller
@@ -76,6 +78,19 @@ class InterviewController extends Controller
                 'election_periods.election_year',
                 'creators.name as created_by_name'
             );
+    }
+
+    private function sendInterviewScheduledMail(object $interview): void
+    {
+        if (empty($interview->email)) {
+            return;
+        }
+
+        try {
+            Mail::to($interview->email)->send(new InterviewScheduledMail($interview));
+        } catch (Throwable $e) {
+            report($e);
+        }
     }
 
     private function candidateStatusFromInterviewStatus(string $status, string $fallback = 'valid'): string
@@ -162,6 +177,17 @@ class InterviewController extends Controller
                         'status' => 'interview_scheduled',
                         'updated_at' => $now,
                     ]);
+                
+                $createdInterviews = $this->baseQuery()
+                    ->where('interviews.period_id', $periodId)
+                    ->whereIn('interviews.candidate_id', $candidates->pluck('id')->toArray())
+                    ->where('interviews.status', 'scheduled')
+                    ->orderBy('interviews.scheduled_at')
+                    ->get();
+
+                foreach ($createdInterviews as $createdInterview) {
+                    $this->sendInterviewScheduledMail($createdInterview);
+                }
 
                 return $this->success([
                     'generated_count' => count($rows),
@@ -338,6 +364,10 @@ class InterviewController extends Controller
             $data = $this->baseQuery()
                 ->where('interviews.id', $interview->id)
                 ->first();
+
+            if ($data && $data->status === 'scheduled') {
+                $this->sendInterviewScheduledMail($data);
+            }
 
             return $this->success($data, 'Jadwal wawancara berhasil dibuat.', 201);
         } catch (Throwable $e) {
