@@ -240,30 +240,33 @@ class FinalDataSeeder extends Seeder
             }
         }
 
-        $juryIdsByCriterion = [
-            'C1' => [$juri1Id, $juri2Id, $juri3Id],
-            'C2' => [$juri1Id, $juri2Id, $juri3Id],
-            'C3' => [$juri1Id, $juri2Id, $juri3Id],
-            'C4' => [$juri1Id, $juri2Id, $juri3Id],
-            'C5' => [$juri1Id],
-            'C6' => [$juri1Id],
-            'C7' => [$juri1Id],
-            'C8' => [$juri1Id],
-            'C9' => [$juri2Id, $juri3Id],
-            'C10' => [$juri2Id],
-            'C11' => [$juri2Id],
-            'C12' => [$juri2Id],
-            'C13' => [$juri3Id],
-            'C14' => [$juri3Id],
-            'C15' => [$juri3Id],
+        $jurySheetMap = [
+            $juri1Id => [
+                'sheet' => 'Juri 1',
+                'criteria' => ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8'],
+            ],
+            $juri2Id => [
+                'sheet' => 'Juri 2',
+                'criteria' => ['C1', 'C2', 'C3', 'C4', 'C9', 'C10', 'C11', 'C12'],
+            ],
+            $juri3Id => [
+                'sheet' => 'Juri 3',
+                'criteria' => ['C1', 'C2', 'C3', 'C4', 'C9', 'C13', 'C14', 'C15'],
+            ],
         ];
 
-        foreach ($excelCandidates as $candidate) {
-            foreach ($candidate['scores'] as $criterionCode => $score) {
-                foreach ($juryIdsByCriterion[$criterionCode] as $juryId) {
+        $juryScores = $this->readJuryScoresFromExcel($jurySheetMap);
+
+        foreach ($juryScores as $juryId => $candidateScores) {
+            foreach ($candidateScores as $candidateCode => $scores) {
+                if (!isset($candidateIds[$candidateCode])) {
+                    throw new RuntimeException("Candidate {$candidateCode} tidak ditemukan saat insert score.");
+                }
+
+                foreach ($scores as $criterionCode => $score) {
                     DB::table('scores')->insert([
                         'period_id' => $periodId,
-                        'candidate_id' => $candidateIds[$candidate['code']],
+                        'candidate_id' => $candidateIds[$candidateCode],
                         'user_id' => $juryId,
                         'criterion_id' => $criterionIds[$criterionCode],
                         'score' => $score,
@@ -397,6 +400,106 @@ class FinalDataSeeder extends Seeder
         }
 
         return $candidates;
+    }
+
+    private function readJuryScoresFromExcel(array $jurySheetMap): array
+    {
+        $excelPath = $this->excelPath();
+
+        $zip = new ZipArchive();
+
+        if ($zip->open($excelPath) !== true) {
+            throw new RuntimeException("Gagal membuka file Excel: {$excelPath}");
+        }
+
+        $sharedStrings = $this->readSharedStrings($zip);
+        $result = [];
+
+        foreach ($jurySheetMap as $juryId => $config) {
+            $sheetName = $config['sheet'];
+            $criterionCodes = $config['criteria'];
+
+            $sheetPath = $this->worksheetPath($zip, $sheetName);
+            $rows = $this->readWorksheetRows($zip, $sheetPath, $sharedStrings);
+
+            $result[$juryId] = $this->readJuryScoreRows($rows, $criterionCodes, $sheetName);
+        }
+
+        $zip->close();
+
+        return $result;
+    }
+
+    private function readJuryScoreRows(array $rows, array $criterionCodes, string $sheetName): array
+    {
+        if (empty($rows)) {
+            throw new RuntimeException("Sheet {$sheetName} kosong atau tidak terbaca.");
+        }
+
+        $maxRow = max(array_keys($rows));
+
+        foreach ($rows as $headerRowNumber => $headerRow) {
+            $headerMap = $this->detectCandidateHeader($headerRow);
+
+            if (!$headerMap) {
+                continue;
+            }
+
+            $scoreColumns = [];
+            $startScoreColumnNumber = $this->columnNumber($headerMap['generation']) + 1;
+
+            foreach (array_values($criterionCodes) as $index => $criterionCode) {
+                $scoreColumns[$criterionCode] = $this->columnName($startScoreColumnNumber + $index);
+            }
+
+            $candidateScores = [];
+
+            for ($rowNumber = $headerRowNumber + 1; $rowNumber <= $maxRow; $rowNumber++) {
+                $row = $rows[$rowNumber] ?? [];
+
+                $candidateNumber = $this->candidateNumber($row[$headerMap['no']] ?? null);
+
+                if ($candidateNumber === null) {
+                    if (count($candidateScores) > 0) {
+                        break;
+                    }
+
+                    continue;
+                }
+
+                if ($candidateNumber < 1 || $candidateNumber > 49) {
+                    continue;
+                }
+
+                $scores = [];
+
+                foreach ($scoreColumns as $criterionCode => $column) {
+                    $score = $this->numericValue($row[$column] ?? null);
+
+                    if ($score === null) {
+                        throw new RuntimeException(
+                            "Nilai {$criterionCode} kosong pada {$sheetName}, kandidat nomor {$candidateNumber}, baris Excel {$rowNumber}."
+                        );
+                    }
+
+                    $scores[$criterionCode] = round($score, 2);
+                }
+
+                $candidateScores[sprintf('P%02d', $candidateNumber)] = $scores;
+
+                if (count($candidateScores) === 49) {
+                    break;
+                }
+            }
+
+            if (count($candidateScores) === 49) {
+                return $candidateScores;
+            }
+        }
+
+        throw new RuntimeException(
+            "Jumlah nilai kandidat pada sheet {$sheetName} harus 49, terbaca: " . count($candidateScores ?? [])
+        );
     }
 
     private function excelPath(): string
