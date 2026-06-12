@@ -150,6 +150,12 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         ]);
     })->name('admin.aras.index');
 
+    Route::get('/admin/aras/calculation', function () {
+        return view('admin.aras.calculation', [
+            'title' => 'Detail Perhitungan ARAS - Admin',
+        ]);
+    })->name('admin.aras.calculation');
+
     Route::get('/admin/announcements', function () {
         return view('admin.announcements.index', [
             'title' => 'Pengumuman Hasil - Admin',

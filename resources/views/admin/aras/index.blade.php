@@ -15,6 +15,13 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
+                <a
+                    id="calculationDetailBtn"
+                    href="{{ route('admin.aras.calculation') }}"
+                    class="rounded-lg border border-blue-600 bg-white px-4 py-2 text-center text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-50"
+                >
+                    Lihat Detail Perhitungan
+                </a>
                 <button
                     type="button"
                     onclick="loadArasResults()"

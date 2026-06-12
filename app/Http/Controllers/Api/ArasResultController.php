@@ -378,4 +378,378 @@ class ArasResultController extends Controller
             return $this->error('Perhitungan ARAS gagal dilakukan.', 500, $e->getMessage());
         }
     }
+
+    public function calculationDetail(Request $request): JsonResponse
+    {
+        if ($deny = $this->adminOnly($request)) {
+            return $deny;
+        }
+
+        $validator = Validator::make($request->all(), [
+            'period_id' => ['required', 'integer', 'exists:election_periods,id'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error('Validasi gagal.', 422, $validator->errors());
+        }
+
+        try {
+            $periodId = (int) $request->period_id;
+
+            $period = DB::table('election_periods')
+                ->where('id', $periodId)
+                ->first();
+
+            $criteria = Criterion::query()
+                ->where('period_id', $periodId)
+                ->where('is_active', true)
+                ->get()
+                ->sortBy(function ($criterion) {
+                    return (int) preg_replace('/\D+/', '', (string) $criterion->code);
+                })
+                ->values();
+
+            if ($criteria->isEmpty()) {
+                return $this->error('Tidak ada kriteria aktif pada periode ini.', 422);
+            }
+
+            $criteriaIds = $criteria->pluck('id')->toArray();
+
+            $candidates = Candidate::query()
+                ->where('period_id', $periodId)
+                ->whereNotIn('status', ['pending', 'invalid'])
+                ->whereExists(function ($query) use ($periodId) {
+                    $query->select(DB::raw(1))
+                        ->from('scores')
+                        ->whereColumn('scores.candidate_id', 'candidates.id')
+                        ->where('scores.period_id', $periodId);
+                })
+                ->orderBy('registration_number')
+                ->orderBy('created_at')
+                ->get();
+
+            if ($candidates->isEmpty()) {
+                return $this->error('Belum ada calon yang memiliki data nilai pada periode ini.', 422);
+            }
+
+            $candidateIds = $candidates->pluck('id')->toArray();
+
+            $weightTotal = $criteria->sum(function ($criterion) {
+                return (float) $criterion->weight;
+            });
+
+            if ($weightTotal <= 0) {
+                return $this->error('Total bobot kriteria harus lebih besar dari 0.', 422);
+            }
+
+            $criteriaPayload = [];
+            $normalizedWeights = [];
+
+            foreach ($criteria as $criterion) {
+                $criterionId = (int) $criterion->id;
+                $normalizedWeight = (float) $criterion->weight / $weightTotal;
+
+                $normalizedWeights[$criterionId] = $normalizedWeight;
+
+                $criteriaPayload[] = [
+                    'id' => $criterionId,
+                    'code' => $criterion->code,
+                    'name' => $criterion->name,
+                    'type' => $criterion->type,
+                    'weight' => round((float) $criterion->weight, 6),
+                    'normalized_weight' => round($normalizedWeight, 6),
+                ];
+            }
+
+            $averages = Score::query()
+                ->select(
+                    'candidate_id',
+                    'criterion_id',
+                    DB::raw('AVG(score) as average_score'),
+                    DB::raw('COUNT(*) as score_count')
+                )
+                ->where('period_id', $periodId)
+                ->whereIn('candidate_id', $candidateIds)
+                ->whereIn('criterion_id', $criteriaIds)
+                ->groupBy('candidate_id', 'criterion_id')
+                ->get();
+
+            $averageMap = [];
+            $scoreCountMap = [];
+
+            foreach ($averages as $average) {
+                $candidateId = (int) $average->candidate_id;
+                $criterionId = (int) $average->criterion_id;
+
+                $averageMap[$candidateId][$criterionId] = round((float) $average->average_score, 6);
+                $scoreCountMap[$candidateId][$criterionId] = (int) $average->score_count;
+            }
+
+            $matrix = [];
+            $scoreCounts = [];
+            $decisionMatrix = [];
+            $missingScores = [];
+
+            foreach ($candidates as $candidate) {
+                $candidateId = (int) $candidate->id;
+                $values = [];
+                $counts = [];
+
+                foreach ($criteria as $criterion) {
+                    $criterionId = (int) $criterion->id;
+                    $code = (string) $criterion->code;
+
+                    if (!isset($averageMap[$candidateId][$criterionId])) {
+                        $missingScores[] = [
+                            'candidate_id' => $candidateId,
+                            'candidate_name' => $candidate->full_name,
+                            'criterion_id' => $criterionId,
+                            'criterion_code' => $code,
+                            'criterion_name' => $criterion->name,
+                        ];
+
+                        continue;
+                    }
+
+                    $matrix[$candidateId][$criterionId] = $averageMap[$candidateId][$criterionId];
+                    $scoreCounts[$candidateId][$criterionId] = $scoreCountMap[$candidateId][$criterionId] ?? 0;
+
+                    $values[$code] = round($averageMap[$candidateId][$criterionId], 6);
+                    $counts[$code] = $scoreCounts[$candidateId][$criterionId];
+                }
+
+                $decisionMatrix[] = [
+                    'candidate_id' => $candidateId,
+                    'registration_number' => $candidate->registration_number,
+                    'candidate_name' => $candidate->full_name,
+                    'values' => $values,
+                    'score_counts' => $counts,
+                ];
+            }
+
+            if (!empty($missingScores)) {
+                return $this->error(
+                    'Nilai belum lengkap untuk semua calon dan kriteria aktif.',
+                    422,
+                    [
+                        'missing_count' => count($missingScores),
+                        'missing_samples' => array_slice($missingScores, 0, 20),
+                    ]
+                );
+            }
+
+            $idealValues = [];
+
+            foreach ($criteria as $criterion) {
+                $criterionId = (int) $criterion->id;
+                $values = [];
+
+                foreach ($candidates as $candidate) {
+                    $values[] = (float) $matrix[(int) $candidate->id][$criterionId];
+                }
+
+                if (empty($values)) {
+                    return $this->error("Nilai untuk kriteria {$criterion->code} tidak ditemukan.", 422);
+                }
+
+                $type = strtolower((string) $criterion->type);
+
+                $idealValues[$criterionId] = $type === 'cost'
+                    ? min($values)
+                    : max($values);
+            }
+
+            $idealRow = [
+                'label' => 'A0',
+                'candidate_name' => 'A0 (Optimum Target)',
+                'values' => [],
+            ];
+
+            foreach ($criteria as $criterion) {
+                $idealRow['values'][(string) $criterion->code] = round($idealValues[(int) $criterion->id], 6);
+            }
+
+            $transformedMatrix = [];
+            $transformedIdeal = [];
+            $columnTotals = [];
+
+            foreach ($criteria as $criterion) {
+                $criterionId = (int) $criterion->id;
+                $type = strtolower((string) $criterion->type);
+
+                if ($type === 'cost') {
+                    if ((float) $idealValues[$criterionId] <= 0) {
+                        return $this->error(
+                            "Kriteria cost {$criterion->code} memiliki nilai ideal 0 atau kurang, sehingga tidak bisa dinormalisasi.",
+                            422
+                        );
+                    }
+
+                    $transformedIdeal[$criterionId] = 1 / (float) $idealValues[$criterionId];
+                } else {
+                    $transformedIdeal[$criterionId] = (float) $idealValues[$criterionId];
+                }
+
+                $columnTotals[$criterionId] = $transformedIdeal[$criterionId];
+
+                foreach ($candidates as $candidate) {
+                    $candidateId = (int) $candidate->id;
+                    $value = (float) $matrix[$candidateId][$criterionId];
+
+                    if ($type === 'cost') {
+                        if ($value <= 0) {
+                            return $this->error(
+                                "Kriteria cost {$criterion->code} memiliki nilai 0 atau kurang pada calon {$candidate->full_name}.",
+                                422
+                            );
+                        }
+
+                        $transformedValue = 1 / $value;
+                    } else {
+                        $transformedValue = $value;
+                    }
+
+                    $transformedMatrix[$candidateId][$criterionId] = $transformedValue;
+                    $columnTotals[$criterionId] += $transformedValue;
+                }
+
+                if ($columnTotals[$criterionId] <= 0) {
+                    return $this->error("Total kolom kriteria {$criterion->code} harus lebih besar dari 0.", 422);
+                }
+            }
+
+            $columnTotalRow = [
+                'label' => 'Total',
+                'values' => [],
+            ];
+
+            foreach ($criteria as $criterion) {
+                $columnTotalRow['values'][(string) $criterion->code] = round($columnTotals[(int) $criterion->id], 6);
+            }
+
+            $normalizedRows = [];
+            $weightedRows = [];
+
+            $normalizedIdealValues = [];
+            $weightedIdealValues = [];
+            $idealScore = 0;
+
+            foreach ($criteria as $criterion) {
+                $criterionId = (int) $criterion->id;
+                $code = (string) $criterion->code;
+
+                $normalizedIdeal = $transformedIdeal[$criterionId] / $columnTotals[$criterionId];
+                $weightedIdeal = $normalizedIdeal * $normalizedWeights[$criterionId];
+
+                $normalizedIdealValues[$code] = round($normalizedIdeal, 6);
+                $weightedIdealValues[$code] = round($weightedIdeal, 6);
+
+                $idealScore += $weightedIdeal;
+            }
+
+            if ($idealScore <= 0) {
+                return $this->error('Nilai ideal ARAS tidak valid.', 422);
+            }
+
+            $normalizedRows[] = [
+                'type' => 'ideal',
+                'candidate_id' => null,
+                'candidate_name' => 'A0 (Optimum Target)',
+                'values' => $normalizedIdealValues,
+            ];
+
+            $weightedRows[] = [
+                'type' => 'ideal',
+                'candidate_id' => null,
+                'candidate_name' => 'A0 (Optimum Target)',
+                'values' => $weightedIdealValues,
+                'total_score' => round($idealScore, 6),
+                'utility_score' => 1,
+            ];
+
+            $results = [];
+
+            foreach ($candidates as $candidate) {
+                $candidateId = (int) $candidate->id;
+
+                $normalizedValues = [];
+                $weightedValues = [];
+                $totalScore = 0;
+
+                foreach ($criteria as $criterion) {
+                    $criterionId = (int) $criterion->id;
+                    $code = (string) $criterion->code;
+
+                    $normalizedValue = $transformedMatrix[$candidateId][$criterionId] / $columnTotals[$criterionId];
+                    $weightedValue = $normalizedValue * $normalizedWeights[$criterionId];
+
+                    $normalizedValues[$code] = round($normalizedValue, 6);
+                    $weightedValues[$code] = round($weightedValue, 6);
+
+                    $totalScore += $weightedValue;
+                }
+
+                $utilityScore = $totalScore / $idealScore;
+
+                $normalizedRows[] = [
+                    'type' => 'candidate',
+                    'candidate_id' => $candidateId,
+                    'registration_number' => $candidate->registration_number,
+                    'candidate_name' => $candidate->full_name,
+                    'values' => $normalizedValues,
+                ];
+
+                $weightedRows[] = [
+                    'type' => 'candidate',
+                    'candidate_id' => $candidateId,
+                    'registration_number' => $candidate->registration_number,
+                    'candidate_name' => $candidate->full_name,
+                    'values' => $weightedValues,
+                    'total_score' => round($totalScore, 6),
+                    'utility_score' => round($utilityScore, 6),
+                ];
+
+                $results[] = [
+                    'candidate_id' => $candidateId,
+                    'registration_number' => $candidate->registration_number,
+                    'candidate_name' => $candidate->full_name,
+                    'total_score' => round($totalScore, 6),
+                    'utility_score' => round($utilityScore, 6),
+                ];
+            }
+
+            usort($results, function ($a, $b) {
+                if ($b['utility_score'] === $a['utility_score']) {
+                    return $b['total_score'] <=> $a['total_score'];
+                }
+
+                return $b['utility_score'] <=> $a['utility_score'];
+            });
+
+            foreach ($results as $index => $result) {
+                $results[$index]['final_rank'] = $index + 1;
+            }
+
+            return $this->success([
+                'period' => $period,
+                'period_id' => $periodId,
+                'candidate_count' => $candidates->count(),
+                'criteria_count' => $criteria->count(),
+                'weight_total' => round($weightTotal, 6),
+                'ideal_score' => round($idealScore, 6),
+                'criteria' => $criteriaPayload,
+                'steps' => [
+                    'criteria_weights' => $criteriaPayload,
+                    'decision_matrix' => $decisionMatrix,
+                    'ideal_row' => $idealRow,
+                    'column_totals' => $columnTotalRow,
+                    'normalized_matrix' => $normalizedRows,
+                    'weighted_matrix' => $weightedRows,
+                    'ranking' => $results,
+                ],
+            ], 'Detail perhitungan ARAS berhasil diambil.');
+        } catch (Throwable $e) {
+            return $this->error('Detail perhitungan ARAS gagal diambil.', 500, $e->getMessage());
+        }
+    }
 }
